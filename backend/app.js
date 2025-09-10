@@ -1,0 +1,93 @@
+// app.js
+const express = require("express");
+const session = require("express-session");
+const path = require("path");
+const dotenv = require("dotenv");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+
+// Load env vars
+dotenv.config();
+
+// Local Modules
+const connectDB = require("./config/db");
+const rootDir = require("./utils/pathUtil");
+const storeRouter = require("./routes/storeRouter");
+const hostRouter = require("./routes/hostRouter");
+const authRouter = require("./routes/authRouter");
+const errorsController = require("./controllers/errors");
+const errorHandler = require("./middleware/errorHandler");
+const sessionStore = require("./config/sessionStore");
+
+const PORT = process.env.PORT || 3000;
+const cors = require("cors");
+
+const app = express();
+
+// Security middleware
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+app.use(limiter);
+
+app.set("view engine", "ejs");
+app.set("views", path.join(rootDir, "views"));
+
+connectDB();
+
+// Logging middleware for debugging
+const morgan = require("morgan");
+
+// Use morgan for logging HTTP requests
+app.use(morgan("dev"));
+
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Session middleware
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      httpOnly: true,
+      secure: false, // Set to true in production with HTTPS
+    },
+  })
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Serve static files
+app.use(express.static(path.join(rootDir, "public")));
+app.use("/uploads", express.static(path.join(rootDir, "uploads")));
+app.use("/host/uploads", express.static(path.join(rootDir, "uploads")));
+app.use("/homes/uploads", express.static(path.join(rootDir, "uploads")));
+
+// Routes
+app.use("/api/store", storeRouter);
+app.use("/api/host", hostRouter);
+app.use("/api/auth", authRouter);
+
+// 404 error handler
+app.use(errorsController.pageNotFound);
+
+// Centralized error handler middleware
+app.use(errorHandler);
+
+// Server Start
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+});
