@@ -65,7 +65,7 @@ const Navbar = () => {
           className="text-3xl font-extrabold transition-transform hover:scale-105"
           aria-label="Airbnb Home"
         >
-          Airbnb PK
+          Airbnb
         </Link>
 
         {/* Search Bar */}
