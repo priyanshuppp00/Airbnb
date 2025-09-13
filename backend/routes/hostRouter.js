@@ -8,31 +8,22 @@ const hostRouter = express.Router();
 // Local Module
 const hostController = require("../controllers/hostController");
 
-hostRouter.get("/add-home", hostController.getAddHome);
-hostRouter.post(
-  "/add-home",
-  upload.single("photo"),
-  hostController.postAddHome
-);
-hostRouter.get("/host-home-list", hostController.getHostHomes);
-hostRouter.get("/edit-home/:homeId", hostController.getEditHome);
-hostRouter.post(
-  "/edit-home",
-  upload.single("photo"),
-  hostController.postEditHome
-);
-hostRouter.post("/delete-home/:homeId", hostController.postDeleteHome);
-
 // API routes
 hostRouter.get("/homes", hostController.getHomesApi);
 hostRouter.post(
   "/homes",
-  upload.single("photo"),
+  upload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "rulesFile", maxCount: 1 },
+  ]),
   hostController.postAddHomeApi
 );
 hostRouter.put(
   "/homes/:homeId",
-  upload.single("photo"),
+  upload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "rulesFile", maxCount: 1 },
+  ]),
   hostController.editHomeApi
 );
 hostRouter.delete("/homes/:homeId", hostController.postDeleteHome);

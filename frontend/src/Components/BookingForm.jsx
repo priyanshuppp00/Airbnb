@@ -9,70 +9,66 @@ const BookingForm = ({ home, onSubmit, onClose }) => {
     specialRequests: "",
   });
   const [loading, setLoading] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Animate modal in
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  // Close with animation
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(onClose, 300); // match transition duration
   };
 
-  // Handle submit
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      await onSubmit({
-        homeId: home._id,
-        ...formData,
-      });
-      onClose();
-    } catch (error) {
-      console.error("Booking failed:", error);
+      await onSubmit({ homeId: home._id, ...formData });
+      handleClose();
+    } catch (err) {
+      console.error("Booking failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Allow closing modal with ESC key
+  // Close on Escape
   useEffect(() => {
-    const handleEsc = (e) => e.key === "Escape" && onClose();
+    const handleEsc = (e) => e.key === "Escape" && handleClose();
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  });
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose} // close on outside click
+      className={`fixed inset-0 flex items-center justify-center z-50 transition-opacity duration-300 ${
+        isVisible ? "opacity-100" : "opacity-0 pointer-events-none"
+      } bg-black bg-opacity-50`}
+      onClick={handleClose}
     >
       <div
-        className="bg-white rounded-lg p-6 w-full max-w-md mx-4"
-        onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+        className={`bg-white rounded-lg p-6 w-full max-w-md mx-4 transform transition-transform duration-300 ${
+          isVisible ? "scale-100" : "scale-95"
+        }`}
+        onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Book {home.houseName}
         </h2>
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-          encType="multipart/form-data"
-        >
-          {/* Name */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Name:
             </label>
             <input
-              id="name"
-              type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
@@ -82,16 +78,11 @@ const BookingForm = ({ home, onSubmit, onClose }) => {
             />
           </div>
 
-          {/* Check-in Date */}
           <div>
-            <label
-              htmlFor="checkInDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Check-in Date
             </label>
             <input
-              id="checkInDate"
               type="date"
               name="checkInDate"
               value={formData.checkInDate}
@@ -103,16 +94,11 @@ const BookingForm = ({ home, onSubmit, onClose }) => {
             />
           </div>
 
-          {/* Check-out Date */}
           <div>
-            <label
-              htmlFor="checkOutDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Check-out Date
             </label>
             <input
-              id="checkOutDate"
               type="date"
               name="checkOutDate"
               value={formData.checkOutDate}
@@ -126,16 +112,11 @@ const BookingForm = ({ home, onSubmit, onClose }) => {
             />
           </div>
 
-          {/* Guests */}
           <div>
-            <label
-              htmlFor="guests"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Number of Guests
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Guests
             </label>
             <input
-              id="guests"
               type="number"
               name="guests"
               value={formData.guests}
@@ -148,41 +129,33 @@ const BookingForm = ({ home, onSubmit, onClose }) => {
             />
           </div>
 
-          {/* Special Requests */}
           <div>
-            <label
-              htmlFor="specialRequests"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Special Requests (Optional)
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Special Requests
             </label>
             <textarea
-              id="specialRequests"
               name="specialRequests"
               value={formData.specialRequests}
               onChange={handleChange}
               rows="3"
               disabled={loading}
               className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50"
-              placeholder="Any special requests or notes..."
             />
           </div>
 
-          {/* Buttons */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={loading}
-              className="flex-1 py-2 px-4 border border-gray-300 rounded-md 
-                         text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
+              className="flex-1 py-2 px-4 border border-gray-300  text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer  font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2 text-white bg-red-500 hover:bg-red-600 rounded-md transition disabled:opacity-50 cursor-pointer"
+              className="flex-1 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:bg-red-600 hover:scale-105 hover:shadow-2xl"
             >
               {loading ? "Booking..." : "Book Now"}
             </button>

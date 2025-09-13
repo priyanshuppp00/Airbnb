@@ -1,6 +1,9 @@
 import React, { useContext, useState, useEffect } from "react";
 import { UserContext } from "../context/UserContext";
 import { authAPI } from "../service/api";
+import ProfileForm from "../Components/ProfileForm";
+import { Toaster } from "react-hot-toast";
+import _ from "lodash"; // ✅ Import lodash
 
 const Profile = () => {
   const { user, loading, fetchUser } = useContext(UserContext);
@@ -32,33 +35,28 @@ const Profile = () => {
     }
   }, [user]);
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await authAPI.updateProfile(formData);
       setMessage(response.data.message);
       setEditMode(false);
-      await fetchUser(); // Refresh user data in context
+      await fetchUser();
     } catch {
       setMessage("Failed to update profile");
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!user) {
-    return <div>Please log in to view your profile.</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>Please log in to view your profile.</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
-      <div className="bg-white rounded-lg shadow-md p-6 max-w-md w-full">
+    <div className="pt-20 flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+        <h2 className="mb-2 text-3xl font-bold text-center text-gray-800">
+          Profile
+        </h2>
         {!editMode ? (
           <>
             <div className="flex flex-col items-center">
@@ -69,7 +67,7 @@ const Profile = () => {
                     : `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=E5E7EB&color=111827`
                 }
                 alt="Profile"
-                className="w-24 h-24 rounded-full mb-4 object-cover"
+                className="w-40 h-40 rounded-full mb-4 object-cover"
               />
               <h2 className="text-xl font-semibold text-gray-800">
                 {user.firstName} {user.middleName} {user.lastName}
@@ -80,18 +78,22 @@ const Profile = () => {
             <div className="mt-6 space-y-2 text-gray-700">
               <div className="flex justify-between">
                 <span className="font-medium">City:</span>
-                <span>{user.city || "Not specified"}</span>
+                <span>
+                  {user.city
+                    ? _.startCase(_.toLower(user.city))
+                    : "Not specified"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">User Type:</span>
-                <span>{user.userType}</span>
+                <span>{_.startCase(user.userType)}</span>
               </div>
             </div>
 
             <div className="mt-6 text-center">
               <button
                 onClick={() => setEditMode(true)}
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+                className="px-6 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:bg-red-600 hover:scale-105 hover:shadow-2xl cursor-pointer"
               >
                 Edit Profile
               </button>
@@ -103,141 +105,13 @@ const Profile = () => {
             )}
           </>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block font-medium mb-1" htmlFor="firstName">
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="middleName">
-                Middle Name
-              </label>
-              <input
-                type="text"
-                id="middleName"
-                name="middleName"
-                value={formData.middleName}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="lastName">
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="city">
-                City
-              </label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="password">
-                New Password (leave blank to keep current)
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="profilePic">
-                Profile Picture
-              </label>
-              <input
-                type="file"
-                id="profilePic"
-                name="profilePic"
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    profilePic: e.target.files[0],
-                  }))
-                }
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                accept="image/*"
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="email">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1" htmlFor="userType">
-                User Type
-              </label>
-              <select
-                id="userType"
-                name="userType"
-                value={formData.userType}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2"
-              >
-                <option value="guest">Guest</option>
-                <option value="host">Host</option>
-              </select>
-            </div>
-            <div className="text-center">
-              <button
-                type="submit"
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditMode(false)}
-                className="ml-4 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition"
-              >
-                Cancel
-              </button>
-            </div>
-            {message && (
-              <p className="mt-4 text-center text-red-600 font-medium">
-                {message}
-              </p>
-            )}
-          </form>
+          <ProfileForm
+            formData={formData}
+            setFormData={setFormData}
+            handleSubmit={handleSubmit}
+            message={message}
+            setEditMode={setEditMode}
+          />
         )}
       </div>
     </div>

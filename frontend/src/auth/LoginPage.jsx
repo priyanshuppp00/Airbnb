@@ -91,10 +91,10 @@ const LoginPage = () => {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <Link to="/login" className="text-blue-500 hover:underline">
+            <Link to="/login" className="text-blue-400 hover:text-blue-800">
               Forgot Password?
             </Link>
-            <Link to="/signup" className="text-blue-600 hover:underline">
+            <Link to="/signup" className="text-blue-400 hover:text-blue-800">
               Sign Up
             </Link>
           </div>
@@ -102,7 +102,7 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition duration-300 disabled:opacity-50 cursor-pointer"
+            className="w-full py-2 bg-red-500 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:bg-red-600 hover:scale-105 hover:shadow-2xl"
           >
             {loading ? "Logging in..." : "Log In"}
           </button>

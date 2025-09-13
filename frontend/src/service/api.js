@@ -85,17 +85,7 @@ export const hostAPI = {
 
   // Add new home
   addHome: (homeData) => {
-    const formData = new FormData();
-    for (const key in homeData) {
-      if (key === "photos") {
-        homeData.photos.forEach((photo) => {
-          formData.append("photos", photo);
-        });
-      } else {
-        formData.append(key, homeData[key]);
-      }
-    }
-    return apiClient.post("/host/homes", formData, {
+    return apiClient.post("/host/homes", homeData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -104,17 +94,7 @@ export const hostAPI = {
 
   // Edit home
   editHome: (homeId, homeData) => {
-    const formData = new FormData();
-    for (const key in homeData) {
-      if (key === "photos") {
-        homeData.photos.forEach((photo) => {
-          formData.append("photos", photo);
-        });
-      } else {
-        formData.append(key, homeData[key]);
-      }
-    }
-    return apiClient.put(`/host/homes/${homeId}`, formData, {
+    return apiClient.put(`/host/homes/${homeId}`, homeData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

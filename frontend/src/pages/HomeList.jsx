@@ -22,6 +22,7 @@ const HomeList = () => {
   const { refreshBookings, refreshFavourites } = useContext(AppContext);
   const { user } = useContext(UserContext);
 
+  // Fetch homes once
   useEffect(() => {
     storeAPI
       .getHomes()
@@ -36,27 +37,32 @@ const HomeList = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  // Fetch user bookings & favourites when user changes
   useEffect(() => {
     if (user) {
-      // Fetch user bookings
+      // Fetch bookings
       storeAPI
         .getBookings()
         .then((res) => {
           if (Array.isArray(res.data)) {
-            setUserBookings(res.data.map((booking) => booking._id));
+            setUserBookings(res.data.map((b) => b._id));
           }
         })
         .catch(() => {});
 
-      // Fetch user favourites
+      // Fetch favourites
       storeAPI
         .getFavourites()
         .then((res) => {
           if (Array.isArray(res.data)) {
-            setUserFavourites(res.data.map((fav) => fav._id));
+            setUserFavourites(res.data.map((f) => f._id));
           }
         })
         .catch(() => {});
+    } else {
+      // Clear on logout
+      setUserBookings([]);
+      setUserFavourites([]);
     }
   }, [user]);
 
@@ -75,7 +81,7 @@ const HomeList = () => {
       await storeAPI.addToBooking(bookingData.homeId);
       toast.success("Booked successfully!");
       setUserBookings((prev) => [...prev, bookingData.homeId]);
-      if (refreshBookings) refreshBookings();
+      refreshBookings?.();
     } catch {
       alert("Failed to book home.");
     } finally {
@@ -83,21 +89,22 @@ const HomeList = () => {
     }
   };
 
-  const handleFavourite = (homeId) => {
+  const handleFavourite = async (homeId) => {
     if (!user) {
       setShowLoginPopup(true);
       return;
     }
     setFavouriteId(homeId);
-    storeAPI
-      .addToFavourite(homeId)
-      .then(() => {
-        toast.success("Added to favourites!");
-        setUserFavourites((prev) => [...prev, homeId]);
-        if (refreshFavourites) refreshFavourites();
-      })
-      .catch(() => alert("Failed to add to favourites."))
-      .finally(() => setFavouriteId(null));
+    try {
+      await storeAPI.addToFavourite(homeId);
+      toast.success("Added to favourites!");
+      setUserFavourites((prev) => [...prev, homeId]);
+      refreshFavourites?.();
+    } catch {
+      alert("Failed to add to favourites.");
+    } finally {
+      setFavouriteId(null);
+    }
   };
 
   if (loading) return <Spinner />;
@@ -152,9 +159,8 @@ const HomeList = () => {
 
                   <div className="flex items-center justify-between">
                     <p className="text-lg font-bold text-red-600">
-                      ₹{home.price}
+                      ₹{home.price}{" "}
                       <span className="text-sm font-normal text-gray-600">
-                        {" "}
                         / night
                       </span>
                     </p>
@@ -162,11 +168,11 @@ const HomeList = () => {
                       {[...Array(5)].map((_, i) => (
                         <span
                           key={i}
-                          className={`${
+                          className={
                             i < Math.round(home.rating || 0)
                               ? "text-yellow-400"
                               : "text-gray-300"
-                          }`}
+                          }
                         >
                           ★
                         </span>
@@ -178,94 +184,49 @@ const HomeList = () => {
                     {home.description}
                   </p>
 
-                  {/* Buttons on same line */}
                   <div className="flex gap-2 mt-2">
+                    {/* Book Button */}
                     <button
                       onClick={() => handleBookNow(home)}
                       disabled={
                         bookingId === home._id ||
                         userBookings.includes(home._id)
                       }
-                      className={`flex-1 py-2 rounded text-white font-medium transition cursor-pointer ${
+                      className={`flex-1 py-2  text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
                         bookingId === home._id
                           ? "bg-green-300"
                           : userBookings.includes(home._id)
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-green-500 hover:bg-green-600"
+                          : "bg-green-500 hover:bg-green-600 cursor-pointer"
                       }`}
                     >
-                      {bookingId === home._id ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <svg
-                            className="w-4 h-4 animate-spin"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v8z"
-                            />
-                          </svg>
-                          Booking...
-                        </div>
-                      ) : userBookings.includes(home._id) ? (
-                        "Already Booked"
-                      ) : (
-                        "Book"
-                      )}
+                      {bookingId === home._id
+                        ? "Booking..."
+                        : userBookings.includes(home._id)
+                        ? "Already Booked"
+                        : "Book"}
                     </button>
 
+                    {/* Favourite Button */}
                     <button
                       onClick={() => handleFavourite(home._id)}
                       disabled={
                         favouriteId === home._id ||
                         userFavourites.includes(home._id)
                       }
-                      className={`flex-1 py-2 rounded text-white font-medium transition cursor-pointer ${
+                      className={`flex-1 py-2  text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl  ${
                         favouriteId === home._id
                           ? "bg-pink-300"
                           : userFavourites.includes(home._id)
                           ? "bg-gray-400 cursor-not-allowed"
-                          : "bg-red-500 hover:bg-red-600"
+                          : "bg-red-500 hover:bg-red-600 cursor-pointer"
                       }`}
                     >
-                      {favouriteId === home._id ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <svg
-                            className="w-4 h-4 animate-spin"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v8z"
-                            />
-                          </svg>
-                          Adding...
-                        </div>
-                      ) : userFavourites.includes(home._id) ? (
-                        "Already Favourite"
-                      ) : (
-                        "Favourite"
-                      )}
+                      {favouriteId === home._id
+                        ? "Adding..."
+                        : userFavourites.includes(home._id)
+                        ? "Already Favourite"
+                        : "Favourite"}
                     </button>
                   </div>
                 </div>
@@ -274,6 +235,7 @@ const HomeList = () => {
           </div>
         )}
       </div>
+
       {showLoginPopup && (
         <LoginPopup onClose={() => setShowLoginPopup(false)} />
       )}
@@ -287,4 +249,5 @@ const HomeList = () => {
     </>
   );
 };
+
 export default HomeList;

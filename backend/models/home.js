@@ -18,6 +18,7 @@ const homeSchema = mongoose.Schema({
     required: true,
   },
   photo: String,
+  houseRulePdf: String,
   description: String,
 });
 

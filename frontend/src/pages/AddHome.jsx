@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { hostAPI } from "../service/api";
 
 const AddHome = () => {
   const navigate = useNavigate();
@@ -15,19 +15,46 @@ const AddHome = () => {
     rating: "",
     description: "",
     photo: null,
-    rulesFile: null,
+    rulesFile: null, // ✅ PDF optional
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [preview, setPreview] = useState({ photo: null });
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
+
     if (files) {
-      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+      const file = files[0];
+
+      if (name === "photo") {
+        setFormData((prev) => ({ ...prev, photo: file }));
+        setPreview((prev) => ({ ...prev, photo: URL.createObjectURL(file) }));
+      }
+
+      if (name === "rulesFile") {
+        if (file && file.type === "application/pdf") {
+          setFormData((prev) => ({ ...prev, rulesFile: file }));
+        } else {
+          toast.error("Only PDF files are allowed for rules.");
+          if (rulesInputRef.current) rulesInputRef.current.value = "";
+        }
+      }
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const removePhoto = () => {
+    setFormData((prev) => ({ ...prev, photo: null }));
+    setPreview((prev) => ({ ...prev, photo: null }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeRulesFile = () => {
+    setFormData((prev) => ({ ...prev, rulesFile: null }));
+    if (rulesInputRef.current) rulesInputRef.current.value = "";
   };
 
   const handleSubmit = async (e) => {
@@ -46,21 +73,10 @@ const AddHome = () => {
       return;
     }
 
-    const data = new FormData();
-    data.append("houseName", formData.houseName);
-    data.append("price", Number(formData.price));
-    data.append("location", formData.location);
-    data.append("rating", Number(formData.rating));
-    data.append("description", formData.description);
-    if (formData.photo) data.append("photo", formData.photo);
-    if (formData.rulesFile) data.append("rulesFile", formData.rulesFile);
-
     try {
-      await axios.post("/api/host/homes", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
+      await hostAPI.addHome(formData); // ✅ send whole formData (api.js handles FormData)
       toast.success("Home added successfully!");
+
       setFormData({
         houseName: "",
         price: "",
@@ -70,8 +86,8 @@ const AddHome = () => {
         photo: null,
         rulesFile: null,
       });
+      setPreview({ photo: null });
 
-      // reset file inputs
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (rulesInputRef.current) rulesInputRef.current.value = "";
 
@@ -153,7 +169,7 @@ const AddHome = () => {
           {/* Photo Upload */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
-              House Image
+              House Image <span className="text-red-500">*</span>
             </label>
             <input
               type="file"
@@ -164,9 +180,28 @@ const AddHome = () => {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none"
             />
+            {preview.photo && (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  Preview:
+                </p>
+                <img
+                  src={preview.photo}
+                  alt="House Preview"
+                  className="w-full h-40 object-cover rounded-lg shadow"
+                />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="mt-2 text-sm text-red-600 hover:underline"
+                >
+                  Remove Photo
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Rules PDF Upload */}
+          {/* Rules PDF Upload (optional) */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-700">
               Rules (PDF) <span className="text-gray-500">(optional)</span>
@@ -179,6 +214,20 @@ const AddHome = () => {
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none"
             />
+            {formData.rulesFile && (
+              <div className="mt-2 flex items-center justify-between bg-gray-100 p-2 rounded">
+                <span className="text-gray-700 text-sm">
+                  {formData.rulesFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={removeRulesFile}
+                  className="text-sm text-red-600 hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
 
           {errorMessage && (
@@ -188,7 +237,7 @@ const AddHome = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 text-white bg-red-500 hover:bg-red-600 rounded-md transition disabled:opacity-50 cursor-pointer"
+            className="w-full py-2 bg-red-500 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:bg-red-600 hover:scale-105 hover:shadow-2xl cursor-pointer"
           >
             {isLoading ? "Submitting..." : "Submit"}
           </button>

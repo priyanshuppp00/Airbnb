@@ -2,53 +2,11 @@ const Home = require("../models/home");
 const fs = require("fs");
 const User = require("../models/user");
 
-exports.getAddHome = (req, res, next) => {
-  res.render("host/edit-home", {
-    pageTitle: "Add Home to airbnb",
-    currentPage: "addHome",
-    editing: false,
-    isLoggedIn: req.isLoggedIn,
-    user: req.session.user,
-  });
-};
-
-exports.getEditHome = (req, res, next) => {
-  const homeId = req.params.homeId;
-  const editing = req.query.editing === "true";
-
-  Home.findById(homeId).then((home) => {
-    if (!home) {
-      return res.redirect("/host/host-home-list");
-    }
-
-    res.render("host/edit-home", {
-      home: home,
-      pageTitle: "Edit your Home",
-      currentPage: "host-homes",
-      editing: editing,
-      isLoggedIn: req.isLoggedIn,
-      user: req.session.user,
-    });
-  });
-};
-
-exports.getHostHomes = (req, res, next) => {
-  Home.find().then((registeredHomes) => {
-    res.render("host/host-home-list", {
-      registeredHomes: registeredHomes,
-      pageTitle: "Host Homes List",
-      currentPage: "host-homes",
-      isLoggedIn: req.isLoggedIn,
-      user: req.session.user,
-    });
-  });
-};
-
 exports.postAddHome = (req, res, next) => {
   const { houseName, price, location, rating, description } = req.body;
 
   if (!req.file) {
-    return res.status(422).send("No image provided");
+    return res.status(422).json({ error: "No image provided" });
   }
 
   const photo = req.file.path;
@@ -64,10 +22,10 @@ exports.postAddHome = (req, res, next) => {
   home
     .save()
     .then(() => {
-      res.redirect("/host/host-home-list");
+      res.status(201).json({ message: "Home added successfully" });
     })
     .catch((err) => {
-      res.status(500).send("Failed to save home");
+      res.status(500).json({ error: "Failed to save home" });
     });
 };
 
@@ -93,14 +51,14 @@ exports.postEditHome = (req, res, next) => {
       home
         .save()
         .then((result) => {
-          res.redirect("/host/host-home-list");
+          res.status(200).json({ message: "Home updated successfully" });
         })
         .catch((err) => {
-          res.status(500).send("Failed to update home");
+          res.status(500).json({ error: "Failed to update home" });
         });
     })
     .catch((err) => {
-      res.status(500).send("Failed to find home");
+      res.status(500).json({ error: "Failed to find home" });
     });
 };
 
@@ -116,27 +74,10 @@ exports.postDeleteHome = (req, res, next) => {
       );
     })
     .then(() => {
-      // Check if this is an API request (JSON response expected)
-      if (
-        req.headers.accept &&
-        req.headers.accept.includes("application/json")
-      ) {
-        res.status(200).json({ message: "Home deleted successfully" });
-      } else {
-        // Web request - redirect to host home list
-        res.redirect("/host/host-home-list");
-      }
+      res.status(200).json({ message: "Home deleted successfully" });
     })
     .catch((error) => {
-      // Check if this is an API request for error response
-      if (
-        req.headers.accept &&
-        req.headers.accept.includes("application/json")
-      ) {
-        res.status(500).json({ error: "Failed to delete home" });
-      } else {
-        res.status(500).send("Failed to delete home");
-      }
+      res.status(500).json({ error: "Failed to delete home" });
     });
 };
 
@@ -178,13 +119,24 @@ exports.editHomeApi = (req, res, next) => {
       home.rating = rating;
       home.description = description;
 
-      if (req.file) {
+      if (req.files.photo) {
         fs.unlink(home.photo, (err) => {
           if (err) {
             console.error("Error while deleting file ", err);
           }
         });
-        home.photo = req.file.path;
+        home.photo = req.files.photo[0].path;
+      }
+
+      if (req.files.rulesFile) {
+        if (home.houseRulePdf) {
+          fs.unlink(home.houseRulePdf, (err) => {
+            if (err) {
+              console.error("Error while deleting rules PDF ", err);
+            }
+          });
+        }
+        home.houseRulePdf = req.files.rulesFile[0].path;
       }
 
       return home.save();
@@ -201,11 +153,8 @@ exports.editHomeApi = (req, res, next) => {
 exports.postAddHomeApi = (req, res, next) => {
   const { houseName, price, location, rating, description } = req.body;
 
-  if (!req.file) {
-    return res.status(422).json({ error: "No image provided" });
-  }
-
-  const photo = req.file.path;
+  const photo = req.files.photo ? req.files.photo[0].path : null;
+  const houseRulePdf = req.files.rulesFile ? req.files.rulesFile[0].path : null;
 
   const home = new Home({
     houseName,
@@ -213,6 +162,7 @@ exports.postAddHomeApi = (req, res, next) => {
     location,
     rating,
     photo,
+    houseRulePdf,
     description,
   });
 

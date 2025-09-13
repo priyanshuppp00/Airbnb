@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from "react";
-import axios from "axios";
 import { AppContext } from "../context/AppContext";
 import { UserContext } from "../context/UserContext";
 import LoginPopup from "../auth/LoginPopup";
+import Spinner from "../Components/Spinner";
+import { storeAPI } from "../service/api";
 import toast, { Toaster } from "react-hot-toast";
 
 const Booking = () => {
@@ -11,18 +12,18 @@ const Booking = () => {
   const [error, setError] = useState(null);
   const [removingId, setRemovingId] = useState(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+
   const { refreshBookings } = useContext(AppContext);
   const { user, loading: userLoading } = useContext(UserContext);
 
+  // Fetch bookings from API
   const fetchBookings = () => {
-    axios
-      .get("/api/store/bookings")
+    setLoading(true);
+    storeAPI
+      .getBookings()
       .then((res) => {
-        if (Array.isArray(res.data)) {
-          setBookings(res.data);
-        } else {
-          setError("Invalid data received.");
-        }
+        if (Array.isArray(res.data)) setBookings(res.data);
+        else setError("Invalid data received.");
       })
       .catch(() => setError("Failed to fetch bookings."))
       .finally(() => setLoading(false));
@@ -32,32 +33,29 @@ const Booking = () => {
     fetchBookings();
   }, []);
 
+  // Real-time update when bookings are refreshed elsewhere
+  useEffect(() => {
+    if (refreshBookings) fetchBookings();
+  }, [refreshBookings]);
+
   const handleRemoveBooking = (homeId) => {
     if (!user) {
       setShowLoginPopup(true);
       return;
     }
     setRemovingId(homeId);
-    axios
-      .delete(`/api/store/bookings/${homeId}`)
+
+    storeAPI
+      .removeFromBooking(homeId)
       .then(() => {
         toast.success("Booking removed successfully!");
         fetchBookings();
-        if (refreshBookings) refreshBookings();
       })
-      .catch(() => alert("Failed to remove booking."))
+      .catch(() => toast.error("Failed to remove booking."))
       .finally(() => setRemovingId(null));
   };
 
-  if (loading || userLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p className="text-xl font-medium text-gray-600 animate-pulse">
-          Loading bookings...
-        </p>
-      </div>
-    );
-  }
+  if (loading || userLoading) return <Spinner />;
 
   if (error) {
     return (
@@ -76,9 +74,12 @@ const Booking = () => {
         </h1>
 
         {bookings.length === 0 ? (
-          <p className="text-2xl font-medium text-center text-gray-600">
-            No bookings found.
-          </p>
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-600">
+            <p className="text-4xl font-stretch-150%">
+              {" "}
+              No bookings available Found
+            </p>
+          </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
             {bookings.map((home) => (
@@ -86,7 +87,8 @@ const Booking = () => {
                 key={home._id}
                 className="bg-white rounded-2xl shadow hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
-                <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden">
+                {/* Image */}
+                <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden rounded-t-2xl">
                   <img
                     loading="lazy"
                     src={home.photoUrl || "https://via.placeholder.com/400x250"}
@@ -98,6 +100,7 @@ const Booking = () => {
                   />
                 </div>
 
+                {/* Info */}
                 <div className="p-4 space-y-2">
                   <h2 className="text-lg font-semibold text-gray-800">
                     {home.houseName}
@@ -129,10 +132,11 @@ const Booking = () => {
                     {home.description}
                   </p>
 
+                  {/* Remove Booking Button */}
                   <button
                     onClick={() => handleRemoveBooking(home._id)}
                     disabled={removingId === home._id}
-                    className={`w-full py-2 mt-2 rounded text-white cursor-pointer font-medium transition ${
+                    className={`w-full py-2 mt-2  text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer ${
                       removingId === home._id
                         ? "bg-red-300 cursor-not-allowed"
                         : "bg-red-500 hover:bg-red-600"
@@ -171,6 +175,7 @@ const Booking = () => {
           </div>
         )}
       </div>
+
       {showLoginPopup && (
         <LoginPopup onClose={() => setShowLoginPopup(false)} />
       )}

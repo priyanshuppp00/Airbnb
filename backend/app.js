@@ -35,9 +35,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-app.set("view engine", "ejs");
-app.set("views", path.join(rootDir, "views"));
-
 connectDB();
 
 // Logging middleware for debugging

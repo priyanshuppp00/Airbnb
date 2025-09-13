@@ -1,28 +1,6 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 
-exports.getLogin = (req, res, next) => {
-  res.render("auth/login", {
-    pageTitle: "Login",
-    currentPage: "login",
-    isLoggedIn: false,
-    errors: [],
-    oldInput: { email: "" },
-    user: {},
-  });
-};
-
-exports.getSignup = (req, res, next) => {
-  res.render("auth/signup", {
-    pageTitle: "Signup",
-    currentPage: "signup",
-    isLoggedIn: false,
-    errors: [],
-    oldInput: { firstName: "", lastName: "", email: "", userType: "" },
-    user: {},
-  });
-};
-
 // New method to get current logged-in user info
 exports.getCurrentUser = async (req, res, next) => {
   try {
@@ -86,80 +64,35 @@ exports.postLogin = async (req, res, next) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-        return res.status(422).json({ errors: ["User does not exist"] });
-      } else {
-        return res.status(422).render("auth/login", {
-          pageTitle: "Login",
-          currentPage: "login",
-          isLoggedIn: false,
-          errors: ["User does not exist"],
-          oldInput: { email },
-          user: {},
-        });
-      }
+      return res.status(422).json({ errors: ["User does not exist"] });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-        return res.status(422).json({ errors: ["Invalid Password"] });
-      } else {
-        return res.status(422).render("auth/login", {
-          pageTitle: "Login",
-          currentPage: "login",
-          isLoggedIn: false,
-          errors: ["Invalid Password"],
-          oldInput: { email },
-          user: {},
-        });
-      }
+      return res.status(422).json({ errors: ["Invalid Password"] });
     }
 
     req.session.isLoggedIn = true;
     req.session.user = user;
     await req.session.save();
 
-    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-      const { password, ...userWithoutPassword } = user.toObject();
-      return res
-        .status(200)
-        .json({ message: "Login successful", user: userWithoutPassword });
-    } else {
-      return res.redirect("/");
-    }
+    const { password: _, ...userWithoutPassword } = user.toObject();
+    return res
+      .status(200)
+      .json({ message: "Login successful", user: userWithoutPassword });
   } catch (err) {
-    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-      return res.status(500).json({ errors: ["Login failed: " + err.message] });
-    } else {
-      return res.status(500).render("auth/login", {
-        pageTitle: "Login",
-        currentPage: "login",
-        isLoggedIn: false,
-        errors: ["Login failed: " + err.message],
-        oldInput: { email: req.body.email },
-        user: {},
-      });
-    }
+    return res.status(500).json({ errors: ["Login failed: " + err.message] });
   }
 };
 
 exports.postLogout = (req, res, next) => {
   req.session.destroy((err) => {
     if (err) {
-      if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-        return res
-          .status(500)
-          .json({ errors: ["Logout failed: " + err.message] });
-      } else {
-        return next(err);
-      }
+      return res
+        .status(500)
+        .json({ errors: ["Logout failed: " + err.message] });
     }
-    if (req.xhr || req.headers.accept.indexOf("json") > -1) {
-      return res.status(200).json({ message: "Logout successful" });
-    } else {
-      return res.redirect("/");
-    }
+    return res.status(200).json({ message: "Logout successful" });
   });
 };
 
@@ -195,6 +128,6 @@ exports.postSignup = async (req, res, next) => {
 
 exports.forgetpassword = (req, res, next) => {
   req.session.destroy(() => {
-    res.redirect("/login");
+    res.json({ message: "Session destroyed" });
   });
 };

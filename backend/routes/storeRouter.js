@@ -6,7 +6,7 @@ const storeRouter = express.Router();
 const storeController = require("../controllers/storeController");
 
 storeRouter.get("/", storeController.getIndex);
-storeRouter.get("/homes", storeController.getIndex);
+
 storeRouter.get("/bookings", storeController.getBookingsList);
 storeRouter.post("/bookings", storeController.postAddToBooking);
 storeRouter.get("/favourites", storeController.getFavouriteList);

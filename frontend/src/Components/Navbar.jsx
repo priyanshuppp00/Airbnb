@@ -29,7 +29,10 @@ const Navbar = () => {
       ];
 
   const dropdownLinks = user
-    ? [{ id: 1, label: "Profile", path: "/profile" }]
+    ? [
+        { id: 1, label: "Profile", path: "/profile" },
+        { id: 2, label: "Help", path: "/help" },
+      ]
     : [
         { id: 1, label: "Sign up", path: "/signup" },
         { id: 2, label: "Login", path: "/login" },

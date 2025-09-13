@@ -25,18 +25,6 @@ exports.getIndex = (req, res, next) => {
     });
 };
 
-exports.getHomes = (req, res, next) => {
-  Home.find().then((registeredHomes) => {
-    res.render("store/home-list", {
-      registeredHomes: registeredHomes,
-      pageTitle: "Homes List",
-      currentPage: "Home",
-      isLoggedIn: req.isLoggedIn,
-      user: req.session.user,
-    });
-  });
-};
-
 exports.getBookingsList = async (req, res, next) => {
   try {
     if (!req.session.user) {
@@ -165,31 +153,16 @@ exports.getHomeDetails = (req, res, next) => {
         return res.status(404).json({ error: "Home not found" });
       }
 
-      // Check if this is an API request (JSON response expected)
-      if (
-        req.headers.accept &&
-        req.headers.accept.includes("application/json")
-      ) {
-        const homeWithPhotoUrl = {
-          _id: home._id,
-          houseName: home.houseName,
-          price: home.price,
-          location: home.location,
-          rating: home.rating,
-          description: home.description,
-          photoUrl: home.photo ? "/uploads/" + path.basename(home.photo) : null,
-        };
-        res.json(homeWithPhotoUrl);
-      } else {
-        // Render the EJS template for web view
-        res.render("store/home-detail", {
-          home: home,
-          pageTitle: "Home Detail",
-          currentPage: "Home",
-          isLoggedIn: req.isLoggedIn,
-          user: req.session.user,
-        });
-      }
+      const homeWithPhotoUrl = {
+        _id: home._id,
+        houseName: home.houseName,
+        price: home.price,
+        location: home.location,
+        rating: home.rating,
+        description: home.description,
+        photoUrl: home.photo ? "/uploads/" + path.basename(home.photo) : null,
+      };
+      res.json(homeWithPhotoUrl);
     })
     .catch((err) => {
       res.status(500).json({ error: "Failed to fetch home details" });
@@ -198,18 +171,33 @@ exports.getHomeDetails = (req, res, next) => {
 
 exports.getHomeRules = (req, res, next) => {
   if (!req.session.isLoggedIn) {
-    return res.redirect("/login");
+    return res.status(401).json({ error: "User not authenticated" });
   }
   next();
 };
 exports.downloadRules = (req, res) => {
   const homeId = req.params.homeId;
-  const rulesFileName = "Rules.pdf";
-  const filePath = path.join(rootDir, "rules", rulesFileName);
-
-  res.download(filePath, rulesFileName, (err) => {
-    if (err) {
-      res.status(500).send("Failed to download the file.");
-    }
-  });
+  Home.findById(homeId)
+    .then((home) => {
+      if (!home) {
+        return res.status(404).json({ error: "Home not found" });
+      }
+      let filePath;
+      let fileName;
+      if (home.houseRulePdf) {
+        filePath = home.houseRulePdf;
+        fileName = path.basename(home.houseRulePdf);
+      } else {
+        filePath = path.join(rootDir, "public", "HouseRule.pdf");
+        fileName = "HouseRule.pdf";
+      }
+      res.download(filePath, fileName, (err) => {
+        if (err) {
+          res.status(500).json({ error: "Failed to download the file." });
+        }
+      });
+    })
+    .catch((err) => {
+      res.status(500).json({ error: "Failed to fetch home" });
+    });
 };

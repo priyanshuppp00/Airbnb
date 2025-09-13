@@ -1,5 +1,5 @@
-import React, { createContext, useState } from "react";
-import axios from "axios";
+import React, { createContext, useState, useEffect } from "react";
+import { storeAPI, authAPI } from "../service/api";
 
 export const AppContext = createContext();
 
@@ -8,52 +8,110 @@ export const AppProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
   const [favourites, setFavourites] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
+  // ----------------------------
+  // THEME HANDLING
+  // ----------------------------
   const toggleTheme = () => {
     setIsDarkMode((prev) => !prev);
   };
 
-  const addBooking = (booking) => {
-    setBookings((prev) => [...prev, booking]);
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) setIsDarkMode(savedTheme === "dark");
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
+  // ----------------------------
+  // AUTH HANDLING
+  // ----------------------------
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await authAPI.getCurrentUser();
+      setUser(res.data);
+    } catch (err) {
+      console.error("Failed to fetch user", err);
+      setUser(null);
+    }
   };
 
-  const removeBooking = (bookingId) => {
-    setBookings((prev) => prev.filter((b) => b.id !== bookingId));
-  };
-
-  const addFavourite = (item) => {
-    setFavourites((prev) => [...prev, item]);
-  };
-
-  const removeFavourite = (itemId) => {
-    setFavourites((prev) => prev.filter((f) => f.id !== itemId));
-  };
-
+  // ----------------------------
+  // BOOKINGS
+  // ----------------------------
   const refreshBookings = async () => {
     try {
-      const res = await axios.get("/api/store/bookings", {
-        withCredentials: true,
-      });
+      const res = await storeAPI.getBookings();
       setBookings(res.data);
-    } catch (error) {
-      console.error("Failed to refresh bookings", error);
+    } catch (err) {
+      console.error("Failed to refresh bookings", err);
     }
   };
 
+  const addBooking = async (homeId) => {
+    try {
+      const res = await storeAPI.addToBooking(homeId);
+      setBookings((prev) => [...prev, res.data]);
+    } catch (err) {
+      console.error("Failed to add booking", err);
+    }
+  };
+
+  const removeBooking = async (homeId) => {
+    try {
+      await storeAPI.removeFromBooking(homeId);
+      setBookings((prev) => prev.filter((b) => b._id !== homeId));
+    } catch (err) {
+      console.error("Failed to remove booking", err);
+    }
+  };
+
+  // ----------------------------
+  // FAVOURITES
+  // ----------------------------
   const refreshFavourites = async () => {
     try {
-      const res = await axios.get("/api/store/favourites", {
-        withCredentials: true,
-      });
+      const res = await storeAPI.getFavourites();
       setFavourites(res.data);
-    } catch (error) {
-      console.error("Failed to refresh favourites", error);
+    } catch (err) {
+      console.error("Failed to refresh favourites", err);
     }
   };
 
-  const [showPassword, setShowPassword] = useState(false);
+  const addFavourite = async (homeId) => {
+    try {
+      const res = await storeAPI.addToFavourite(homeId);
+      setFavourites((prev) => [...prev, res.data]);
+    } catch (err) {
+      console.error("Failed to add favourite", err);
+    }
+  };
 
+  const removeFavourite = async (homeId) => {
+    try {
+      await storeAPI.removeFromFavourite(homeId);
+      setFavourites((prev) => prev.filter((f) => f._id !== homeId));
+    } catch (err) {
+      console.error("Failed to remove favourite", err);
+    }
+  };
+
+  // ----------------------------
+  // PASSWORD TOGGLE
+  // ----------------------------
   const toggleShowPassword = () => setShowPassword((prev) => !prev);
+
+  // ----------------------------
+  // INITIAL LOAD
+  // ----------------------------
+  useEffect(() => {
+    fetchCurrentUser();
+    refreshBookings();
+    refreshFavourites();
+  }, []);
 
   return (
     <AppContext.Provider
