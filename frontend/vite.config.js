@@ -6,20 +6,11 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/api/user/": {
-        target: "https://airbnb-clone-diao.onrender.com",
-      },
-      "/api/store/": {
-        target: "hhttps://airbnb-clone-diao.onrender.com",
-      },
-      "/api/auth/": {
-        target: "https://airbnb-clone-diao.onrender.com",
-      },
-      "/api/host/": {
-        target: "https://airbnb-clone-diao.onrender.com",
+      "/api": {
+        target: "https://airbnb-backend-9kz8.onrender.com",
       },
       "/uploads/": {
-        target: "https://airbnb-clone-diao.onrender.com",
+        target: "https://airbnb-backend-9kz8.onrender.com",
       },
     },
   },
