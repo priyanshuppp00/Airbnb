@@ -5,7 +5,10 @@ const path = require("path");
 const rootDir = require("../utils/pathUtil");
 
 exports.getIndex = (req, res, next) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl =
+    process.env.NODE_ENV === "production"
+      ? `${req.protocol}://${req.get("host")}`
+      : "";
   Home.find()
     .then((homes) => {
       const homesWithPhotoUrl = homes.map((home) => {
@@ -33,7 +36,10 @@ exports.getBookingsList = async (req, res, next) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "User not authenticated" });
     }
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? `${req.protocol}://${req.get("host")}`
+        : "";
     const userId = req.session.user._id;
     const user = await User.findById(userId).populate("bookings");
     const bookingsWithPhotoUrl = user.bookings.map((home) => {
@@ -60,7 +66,10 @@ exports.getFavouriteList = async (req, res, next) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "User not authenticated" });
     }
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? `${req.protocol}://${req.get("host")}`
+        : "";
     const userId = req.session.user._id;
     const user = await User.findById(userId).populate("favourites");
     const favouritesWithPhotoUrl = user.favourites.map((home) => {
@@ -155,7 +164,10 @@ exports.postRemoveFromFavourite = async (req, res, next) => {
 };
 
 exports.getHomeDetails = (req, res, next) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl =
+    process.env.NODE_ENV === "production"
+      ? `${req.protocol}://${req.get("host")}`
+      : "";
   const homeId = req.params.homeId;
   Home.findById(homeId)
     .then((home) => {

@@ -7,10 +7,10 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://airbnb-backend-9kz8.onrender.com",
+        target: "http://localhost:3000",
       },
       "/uploads/": {
-        target: "https://airbnb-backend-9kz8.onrender.com",
+        target: "http://localhost:3000",
       },
     },
   },

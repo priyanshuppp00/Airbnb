@@ -85,7 +85,10 @@ const path = require("path");
 
 // API method to get homes as JSON
 exports.getHomesApi = (req, res, next) => {
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl =
+    process.env.NODE_ENV === "production"
+      ? `${req.protocol}://${req.get("host")}`
+      : "";
   Home.find()
     .then((homes) => {
       const homesWithPhotoUrl = homes.map((home) => {

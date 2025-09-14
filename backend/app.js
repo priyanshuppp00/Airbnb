@@ -45,17 +45,23 @@ app.use(morgan("dev"));
 
 const corsOptions = {
   origin: function (origin, callback) {
+    console.log("CORS origin:", origin);
     const allowedOrigins = [
       process.env.FRONTEND_URL || "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:5173", // Always allow local frontend
     ];
+    console.log("Allowed origins:", allowedOrigins);
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     // Check if the origin matches any allowed origin, ignoring trailing slash
     const isAllowed = allowedOrigins.some((allowed) => {
       const normalizedOrigin = origin.replace(/\/$/, "");
       const normalizedAllowed = allowed.replace(/\/$/, "");
+      console.log("Checking:", normalizedOrigin, "vs", normalizedAllowed);
       return normalizedOrigin === normalizedAllowed;
     });
+    console.log("Is allowed:", isAllowed);
     if (isAllowed) {
       callback(null, true);
     } else {
@@ -76,7 +82,8 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,
-      secure: false, // Set to true in production with HTTPS
+      secure: process.env.NODE_ENV === "production", // true in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-domain in prod
     },
   })
 );
