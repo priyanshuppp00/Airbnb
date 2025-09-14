@@ -130,7 +130,7 @@ const Navbar = () => {
               <img
                 src={
                   user && user.profilePic
-                    ? `/${user.profilePic.replace(/\\/g, "/")}`
+                    ? user.profilePic
                     : user
                     ? `https://ui-avatars.com/api/?name=${
                         user.firstName || "User"

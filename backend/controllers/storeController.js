@@ -5,6 +5,7 @@ const path = require("path");
 const rootDir = require("../utils/pathUtil");
 
 exports.getIndex = (req, res, next) => {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
   Home.find()
     .then((homes) => {
       const homesWithPhotoUrl = homes.map((home) => {
@@ -15,7 +16,9 @@ exports.getIndex = (req, res, next) => {
           location: home.location,
           rating: home.rating,
           description: home.description,
-          photoUrl: home.photo ? "/uploads/" + path.basename(home.photo) : null,
+          photoUrl: home.photo
+            ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+            : null,
         };
       });
       res.json(homesWithPhotoUrl);
@@ -30,6 +33,7 @@ exports.getBookingsList = async (req, res, next) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "User not authenticated" });
     }
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
     const userId = req.session.user._id;
     const user = await User.findById(userId).populate("bookings");
     const bookingsWithPhotoUrl = user.bookings.map((home) => {
@@ -40,7 +44,9 @@ exports.getBookingsList = async (req, res, next) => {
         location: home.location,
         rating: home.rating,
         description: home.description,
-        photoUrl: home.photo ? "/uploads/" + path.basename(home.photo) : null,
+        photoUrl: home.photo
+          ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+          : null,
       };
     });
     res.status(200).json(bookingsWithPhotoUrl);
@@ -54,6 +60,7 @@ exports.getFavouriteList = async (req, res, next) => {
     if (!req.session.user) {
       return res.status(401).json({ error: "User not authenticated" });
     }
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
     const userId = req.session.user._id;
     const user = await User.findById(userId).populate("favourites");
     const favouritesWithPhotoUrl = user.favourites.map((home) => {
@@ -64,7 +71,9 @@ exports.getFavouriteList = async (req, res, next) => {
         location: home.location,
         rating: home.rating,
         description: home.description,
-        photoUrl: home.photo ? "/uploads/" + path.basename(home.photo) : null,
+        photoUrl: home.photo
+          ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+          : null,
       };
     });
     res.status(200).json(favouritesWithPhotoUrl);
@@ -146,6 +155,7 @@ exports.postRemoveFromFavourite = async (req, res, next) => {
 };
 
 exports.getHomeDetails = (req, res, next) => {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
   const homeId = req.params.homeId;
   Home.findById(homeId)
     .then((home) => {
@@ -160,7 +170,9 @@ exports.getHomeDetails = (req, res, next) => {
         location: home.location,
         rating: home.rating,
         description: home.description,
-        photoUrl: home.photo ? "/uploads/" + path.basename(home.photo) : null,
+        photoUrl: home.photo
+          ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+          : null,
       };
       res.json(homeWithPhotoUrl);
     })

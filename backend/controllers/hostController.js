@@ -81,8 +81,11 @@ exports.postDeleteHome = (req, res, next) => {
     });
 };
 
+const path = require("path");
+
 // API method to get homes as JSON
 exports.getHomesApi = (req, res, next) => {
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
   Home.find()
     .then((homes) => {
       const homesWithPhotoUrl = homes.map((home) => {
@@ -93,7 +96,9 @@ exports.getHomesApi = (req, res, next) => {
           location: home.location,
           rating: home.rating,
           description: home.description,
-          photoUrl: home.photo ? "/" + home.photo.replace(/\\/g, "/") : null,
+          photoUrl: home.photo
+            ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+            : null,
         };
       });
       res.json(homesWithPhotoUrl);
