@@ -14,5 +14,8 @@
   "description": "Fullstack Airbnb clone with MERN and Tailwind CSS",
   "author": "Your Name",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "cookie-parser": "^1.4.7"
+  }
 }

@@ -40,12 +40,6 @@ app.use(limiter);
 
 connectDB();
 
-// Logging middleware for debugging
-const morgan = require("morgan");
-
-// Use morgan for logging HTTP requests
-app.use(morgan("dev"));
-
 const corsOptions = {
   origin: function (origin, callback) {
     console.log("CORS origin:", origin);
@@ -84,12 +78,23 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production for HTTPS
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-site in production
-      domain: process.env.COOKIE_DOMAIN || undefined, // set to '.yourdomain.com' for cross-site
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      domain:
+        process.env.NODE_ENV === "production"
+          ? process.env.COOKIE_DOMAIN
+          : undefined,
     },
   })
 );
+
+// Middleware to log session and cookie info on each request
+app.use((req, res, next) => {
+  console.log("Session ID:", req.sessionID);
+  console.log("Session Data:", req.session);
+  console.log("Cookies:", req.headers.cookie);
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

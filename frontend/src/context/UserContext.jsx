@@ -12,9 +12,11 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   const fetchUser = async () => {
+    console.log("Fetching current user...");
     setLoading(true);
     try {
       const res = await authAPI.getCurrentUser();
+      console.log("Fetch user response:", res);
       if (res.status === 200 && res.data.user) {
         setUser(res.data.user);
       } else {
@@ -29,10 +31,12 @@ export const UserProvider = ({ children }) => {
   };
 
   const login = (userData) => {
+    console.log("Logging in user:", userData);
     setUser(userData);
   };
 
   const clearUserData = () => {
+    console.log("Clearing user data");
     setUser(null);
     // You can clear more user-related states here if you store them in this context
     // For example: setFavorites([]), setBookings([]), etc.
@@ -41,6 +45,7 @@ export const UserProvider = ({ children }) => {
   const logout = async () => {
     try {
       const res = await authAPI.logout();
+      console.log("Logout response:", res);
       if (res.status === 200) {
         clearUserData();
       }
