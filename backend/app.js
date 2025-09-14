@@ -24,6 +24,10 @@ const cors = require("cors");
 
 const app = express();
 
+// Log environment variables for debugging
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("COOKIE_DOMAIN:", process.env.COOKIE_DOMAIN);
+
 // Trust proxy for secure cookies behind load balancer
 app.set("trust proxy", 1);
 
@@ -45,7 +49,8 @@ const corsOptions = {
     console.log("CORS origin:", origin);
     const allowedOrigins = [
       process.env.FRONTEND_URL || "http://localhost:3000",
-      "http://localhost:5173", // Always allow local frontend
+      "http://localhost:5173",
+      "https://airbnb-henna-eight.vercel.app/", // Always allow local frontend
     ];
     console.log("Allowed origins:", allowedOrigins);
     // Allow requests with no origin (like mobile apps or curl requests)
