@@ -81,6 +81,8 @@ exports.postLogin = async (req, res, next) => {
 
     req.session.isLoggedIn = true;
     req.session.user = user;
+    // Touch session to reset expiration on login
+    req.session.touch();
     await req.session.save();
 
     const { password: _, ...userWithoutPassword } = user.toObject();

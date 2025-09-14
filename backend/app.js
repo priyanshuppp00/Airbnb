@@ -82,7 +82,7 @@ app.use(
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // true in production for HTTPS
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-site in production

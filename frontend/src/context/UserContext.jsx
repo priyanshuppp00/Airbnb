@@ -15,7 +15,11 @@ export const UserProvider = ({ children }) => {
     setLoading(true);
     try {
       const res = await authAPI.getCurrentUser();
-      setUser(res.data.user || null);
+      if (res.status === 200 && res.data.user) {
+        setUser(res.data.user);
+      } else {
+        setUser(null);
+      }
     } catch (err) {
       console.error("Failed to fetch user:", err);
       setUser(null);
