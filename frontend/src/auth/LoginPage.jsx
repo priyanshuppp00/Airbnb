@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
-import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { UserContext } from "../context/UserContext";
+import { authAPI } from "../service/api";
 import toast, { Toaster } from "react-hot-toast";
 
 const LoginPage = () => {
@@ -27,9 +27,7 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post("/api/auth/login", form, {
-        withCredentials: true,
-      });
+      const res = await authAPI.login(form);
       login(res.data.user);
 
       toast.success("Login successful!");
