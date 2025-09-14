@@ -178,6 +178,7 @@ const SignupPage = () => {
             placeholder="Confirm Password"
             value={form.confirmPassword}
             onChange={handleChange}
+            required
             className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-red-500 focus:outline-none"
           />
           {errors.confirmPassword && (

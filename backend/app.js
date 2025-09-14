@@ -24,6 +24,9 @@ const cors = require("cors");
 
 const app = express();
 
+// Trust proxy for secure cookies behind load balancer
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(helmet());
 
