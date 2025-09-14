@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // Create an axios instance with default configuration
 const apiClient = axios.create({
@@ -11,57 +11,54 @@ const apiClient = axios.create({
 // Store API functions
 export const storeAPI = {
   // Get all homes
-  getHomes: () => apiClient.get("/api/store/"),
+  getHomes: () => apiClient.get("/store/"),
 
   // Get home details by ID
-  getHomeDetails: (homeId) => apiClient.get(`/api/store/homes/${homeId}`),
+  getHomeDetails: (homeId) => apiClient.get(`/store/homes/${homeId}`),
 
   // Get home rules by ID
-  getHomeRules: (homeId) => apiClient.get(`/api/store/rules/${homeId}`),
+  getHomeRules: (homeId) => apiClient.get(`/store/rules/${homeId}`),
 
   // Download rules PDF
   downloadRules: (homeId) =>
-    apiClient.get(`/api/store/rules/${homeId}`, { responseType: "blob" }),
+    apiClient.get(`/store/rules/${homeId}`, { responseType: "blob" }),
 
   // Add home to bookings
-  addToBooking: (homeId) => apiClient.post("/api/store/bookings", { homeId }),
+  addToBooking: (homeId) => apiClient.post("/store/bookings", { homeId }),
 
   // Get bookings list
-  getBookings: () => apiClient.get("/api/store/bookings"),
+  getBookings: () => apiClient.get("/store/bookings"),
 
   // Remove home from bookings
-  removeFromBooking: (homeId) =>
-    apiClient.delete(`/api/store/bookings/${homeId}`),
+  removeFromBooking: (homeId) => apiClient.delete(`/store/bookings/${homeId}`),
 
   // Add home to favourites
-  addToFavourite: (homeId) =>
-    apiClient.post("/api/store/favourites", { homeId }),
+  addToFavourite: (homeId) => apiClient.post("/store/favourites", { homeId }),
 
   // Get favourites list
-  getFavourites: () => apiClient.get("/api/store/favourites"),
+  getFavourites: () => apiClient.get("/store/favourites"),
 
   // Remove home from favourites
   removeFromFavourite: (homeId) =>
-    apiClient.delete(`/api/store/favourites/${homeId}`),
+    apiClient.delete(`/store/favourites/${homeId}`),
 };
 
 // Auth API functions
 export const authAPI = {
   // Get current user
-  getCurrentUser: () => apiClient.get("/api/auth/current-user"),
+  getCurrentUser: () => apiClient.get("/auth/current-user"),
 
   // User login
-  login: (credentials) => apiClient.post("/api/auth/login", credentials),
+  login: (credentials) => apiClient.post("/auth/login", credentials),
 
   // User signup
-  signup: (userData) => apiClient.post("/api/auth/signup", userData),
+  signup: (userData) => apiClient.post("/auth/signup", userData),
 
   // User logout
-  logout: () => apiClient.post("/api/auth/logout"),
+  logout: () => apiClient.post("/auth/logout"),
 
   // Forgot password
-  forgotPassword: (email) =>
-    apiClient.post("/api/auth/forgot-password", { email }),
+  forgotPassword: (email) => apiClient.post("/auth/forgot-password", { email }),
 
   // Update user profile
   updateProfile: (profileData) => {
@@ -73,7 +70,7 @@ export const authAPI = {
         formData.append(key, profileData[key]);
       }
     }
-    return apiClient.put("/api/auth/profile", formData, {
+    return apiClient.put("/auth/profile", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -84,11 +81,11 @@ export const authAPI = {
 // Host API functions
 export const hostAPI = {
   // Get host's homes
-  getHostHomes: () => apiClient.get("/api/host/homes"),
+  getHostHomes: () => apiClient.get("/host/homes"),
 
   // Add new home
   addHome: (homeData) => {
-    return apiClient.post("/api/host/homes", homeData, {
+    return apiClient.post("/host/homes", homeData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -97,7 +94,7 @@ export const hostAPI = {
 
   // Edit home
   editHome: (homeId, homeData) => {
-    return apiClient.put(`/api/host/homes/${homeId}`, homeData, {
+    return apiClient.put(`/host/homes/${homeId}`, homeData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -105,8 +102,8 @@ export const hostAPI = {
   },
 
   // Delete home
-  deleteHome: (homeId) => apiClient.delete(`/api/host/homes/${homeId}`),
+  deleteHome: (homeId) => apiClient.delete(`/host/homes/${homeId}`),
 
   // Get booking requests
-  getBookingRequests: () => apiClient.get("/api/host/booking-requests"),
+  getBookingRequests: () => apiClient.get("/host/booking-requests"),
 };
