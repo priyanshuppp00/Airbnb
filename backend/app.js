@@ -52,7 +52,9 @@ const corsOptions = {
     if (!origin) return callback(null, true);
     // Check if the origin matches any allowed origin, ignoring trailing slash
     const isAllowed = allowedOrigins.some((allowed) => {
-      return origin === allowed || origin === allowed.replace(/\/$/, "");
+      const normalizedOrigin = origin.replace(/\/$/, "");
+      const normalizedAllowed = allowed.replace(/\/$/, "");
+      return normalizedOrigin === normalizedAllowed;
     });
     if (isAllowed) {
       callback(null, true);
