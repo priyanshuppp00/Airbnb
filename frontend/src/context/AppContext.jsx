@@ -109,9 +109,17 @@ export const AppProvider = ({ children }) => {
   // ----------------------------
   useEffect(() => {
     fetchCurrentUser();
-    refreshBookings();
-    refreshFavourites();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      refreshBookings();
+      refreshFavourites();
+    } else {
+      setBookings([]);
+      setFavourites([]);
+    }
+  }, [user]);
 
   return (
     <AppContext.Provider

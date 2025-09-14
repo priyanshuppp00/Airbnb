@@ -42,6 +42,8 @@ const Profile = () => {
       setMessage(response.data.message);
       setEditMode(false);
       await fetchUser();
+      // Keep the message visible for 3 seconds after update
+      setTimeout(() => setMessage(""), 3000);
     } catch {
       setMessage("Failed to update profile");
     }
@@ -63,7 +65,7 @@ const Profile = () => {
               <img
                 src={
                   user.profilePic
-                    ? `/${user.profilePic.replace(/\\/g, "/")}`
+                    ? user.profilePic
                     : `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=E5E7EB&color=111827`
                 }
                 alt="Profile"

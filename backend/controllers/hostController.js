@@ -9,7 +9,8 @@ exports.postAddHome = (req, res, next) => {
     return res.status(422).json({ error: "No image provided" });
   }
 
-  const photo = req.file.path;
+  const photo = req.file.buffer;
+  const photoMimeType = req.file.mimetype;
 
   const home = new Home({
     houseName,
@@ -17,6 +18,7 @@ exports.postAddHome = (req, res, next) => {
     location,
     rating,
     photo,
+    photoMimeType,
     description,
   });
   home
@@ -40,12 +42,8 @@ exports.postEditHome = (req, res, next) => {
       home.description = description;
 
       if (req.file) {
-        fs.unlink(home.photo, (err) => {
-          if (err) {
-            console.error("Error while deleting file ", err);
-          }
-        });
-        home.photo = req.file.path;
+        home.photo = req.file.buffer;
+        home.photoMimeType = req.file.mimetype;
       }
 
       home
@@ -85,10 +83,6 @@ const path = require("path");
 
 // API method to get homes as JSON
 exports.getHomesApi = (req, res, next) => {
-  const baseUrl =
-    process.env.NODE_ENV === "production"
-      ? `${req.protocol}://${req.get("host")}`
-      : "";
   Home.find()
     .then((homes) => {
       const homesWithPhotoUrl = homes.map((home) => {
@@ -100,7 +94,9 @@ exports.getHomesApi = (req, res, next) => {
           rating: home.rating,
           description: home.description,
           photoUrl: home.photo
-            ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+            ? `data:${home.photoMimeType};base64,${home.photo.toString(
+                "base64"
+              )}`
             : null,
         };
       });
@@ -128,23 +124,13 @@ exports.editHomeApi = (req, res, next) => {
       home.description = description;
 
       if (req.files.photo) {
-        fs.unlink(home.photo, (err) => {
-          if (err) {
-            console.error("Error while deleting file ", err);
-          }
-        });
-        home.photo = req.files.photo[0].path;
+        home.photo = req.files.photo[0].buffer;
+        home.photoMimeType = req.files.photo[0].mimetype;
       }
 
       if (req.files.rulesFile) {
-        if (home.houseRulePdf) {
-          fs.unlink(home.houseRulePdf, (err) => {
-            if (err) {
-              console.error("Error while deleting rules PDF ", err);
-            }
-          });
-        }
-        home.houseRulePdf = req.files.rulesFile[0].path;
+        home.houseRulePdf = req.files.rulesFile[0].buffer;
+        home.houseRulePdfMimeType = req.files.rulesFile[0].mimetype;
       }
 
       return home.save();
@@ -161,8 +147,14 @@ exports.editHomeApi = (req, res, next) => {
 exports.postAddHomeApi = (req, res, next) => {
   const { houseName, price, location, rating, description } = req.body;
 
-  const photo = req.files.photo ? req.files.photo[0].path : null;
-  const houseRulePdf = req.files.rulesFile ? req.files.rulesFile[0].path : null;
+  const photo = req.files.photo ? req.files.photo[0].buffer : null;
+  const photoMimeType = req.files.photo ? req.files.photo[0].mimetype : null;
+  const houseRulePdf = req.files.rulesFile
+    ? req.files.rulesFile[0].buffer
+    : null;
+  const houseRulePdfMimeType = req.files.rulesFile
+    ? req.files.rulesFile[0].mimetype
+    : null;
 
   const home = new Home({
     houseName,
@@ -170,7 +162,9 @@ exports.postAddHomeApi = (req, res, next) => {
     location,
     rating,
     photo,
+    photoMimeType,
     houseRulePdf,
+    houseRulePdfMimeType,
     description,
   });
 

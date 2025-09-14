@@ -10,7 +10,13 @@ exports.getCurrentUser = async (req, res, next) => {
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
-      res.json({ user });
+      const userObj = user.toObject();
+      if (user.profilePic) {
+        userObj.profilePic = `data:${
+          user.profilePicMimeType
+        };base64,${user.profilePic.toString("base64")}`;
+      }
+      res.json({ user: userObj });
     } else {
       res.json({ user: null });
     }
@@ -44,7 +50,8 @@ exports.updateUserProfile = async (req, res, next) => {
       user.password = await bcrypt.hash(password, 12);
     }
     if (req.file) {
-      user.profilePic = req.file.path;
+      user.profilePic = req.file.buffer;
+      user.profilePicMimeType = req.file.mimetype;
     }
 
     await user.save();
@@ -77,6 +84,11 @@ exports.postLogin = async (req, res, next) => {
     await req.session.save();
 
     const { password: _, ...userWithoutPassword } = user.toObject();
+    if (user.profilePic) {
+      userWithoutPassword.profilePic = `data:${
+        user.profilePicMimeType
+      };base64,${user.profilePic.toString("base64")}`;
+    }
     return res
       .status(200)
       .json({ message: "Login successful", user: userWithoutPassword });
@@ -98,6 +110,7 @@ exports.postLogout = (req, res, next) => {
 
 exports.postSignup = async (req, res, next) => {
   try {
+    console.log("Signup req.file:", req.file); // Debug log for file presence
     const { firstName, lastName, email, password } = req.body;
     // Basic validation
     if (!email || !password) {
@@ -119,8 +132,13 @@ exports.postSignup = async (req, res, next) => {
       email,
       password: hashedPassword,
     });
+    if (req.file) {
+      console.log("Saving profilePic in signup");
+      user.profilePic = req.file.buffer;
+      user.profilePicMimeType = req.file.mimetype;
+    }
     await user.save();
-    res.status(201).json({ message: "User created successfully" });
+    res.status(201).json({ message: "User created successfully", user });
   } catch (err) {
     res.status(500).json({ errors: ["Signup failed: " + err.message] });
   }

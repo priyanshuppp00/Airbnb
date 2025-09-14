@@ -47,8 +47,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     console.log("CORS origin:", origin);
     const allowedOrigins = [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://localhost:3000",
+      process.env.FRONTEND_URL || "http://localhost:3000",
       "http://localhost:5173", // Always allow local frontend
     ];
     console.log("Allowed origins:", allowedOrigins);
@@ -82,8 +81,8 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-domain in prod
+      secure: false, // false in dev for localhost
+      sameSite: "lax", // 'lax' for same-site
     },
   })
 );
@@ -93,9 +92,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
 app.use(express.static(path.join(rootDir, "public")));
-app.use("/uploads", express.static(path.join(rootDir, "uploads")));
-app.use("/host/uploads", express.static(path.join(rootDir, "uploads")));
-app.use("/homes/uploads", express.static(path.join(rootDir, "uploads")));
 
 // Routes
 app.use("/api/store", storeRouter);

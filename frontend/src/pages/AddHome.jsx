@@ -30,7 +30,11 @@ const AddHome = () => {
 
       if (name === "photo") {
         setFormData((prev) => ({ ...prev, photo: file }));
-        setPreview((prev) => ({ ...prev, photo: URL.createObjectURL(file) }));
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreview((prev) => ({ ...prev, photo: reader.result }));
+        };
+        reader.readAsDataURL(file);
       }
 
       if (name === "rulesFile") {

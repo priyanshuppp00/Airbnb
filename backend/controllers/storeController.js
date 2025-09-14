@@ -20,7 +20,11 @@ exports.getIndex = (req, res, next) => {
           rating: home.rating,
           description: home.description,
           photoUrl: home.photo
-            ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+            ? Buffer.isBuffer(home.photo)
+              ? `data:${home.photoMimeType};base64,${home.photo.toString(
+                  "base64"
+                )}`
+              : `${baseUrl}/uploads/${path.basename(home.photo)}`
             : null,
         };
       });
@@ -51,7 +55,11 @@ exports.getBookingsList = async (req, res, next) => {
         rating: home.rating,
         description: home.description,
         photoUrl: home.photo
-          ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+          ? Buffer.isBuffer(home.photo)
+            ? `data:${home.photoMimeType};base64,${home.photo.toString(
+                "base64"
+              )}`
+            : `${baseUrl}/uploads/${path.basename(home.photo)}`
           : null,
       };
     });
@@ -81,7 +89,7 @@ exports.getFavouriteList = async (req, res, next) => {
         rating: home.rating,
         description: home.description,
         photoUrl: home.photo
-          ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+          ? `data:${home.photoMimeType};base64,${home.photo.toString("base64")}`
           : null,
       };
     });
@@ -183,7 +191,7 @@ exports.getHomeDetails = (req, res, next) => {
         rating: home.rating,
         description: home.description,
         photoUrl: home.photo
-          ? `${baseUrl}/uploads/${path.basename(home.photo)}`
+          ? `data:${home.photoMimeType};base64,${home.photo.toString("base64")}`
           : null,
       };
       res.json(homeWithPhotoUrl);
@@ -206,20 +214,24 @@ exports.downloadRules = (req, res) => {
       if (!home) {
         return res.status(404).json({ error: "Home not found" });
       }
-      let filePath;
-      let fileName;
       if (home.houseRulePdf) {
-        filePath = home.houseRulePdf;
-        fileName = path.basename(home.houseRulePdf);
+        res.setHeader(
+          "Content-Type",
+          home.houseRulePdfMimeType || "application/pdf"
+        );
+        res.setHeader(
+          "Content-Disposition",
+          'attachment; filename="HouseRule.pdf"'
+        );
+        res.send(home.houseRulePdf);
       } else {
-        filePath = path.join(rootDir, "public", "HouseRule.pdf");
-        fileName = "HouseRule.pdf";
+        const filePath = path.join(rootDir, "public", "HouseRule.pdf");
+        res.download(filePath, "HouseRule.pdf", (err) => {
+          if (err) {
+            res.status(500).json({ error: "Failed to download the file." });
+          }
+        });
       }
-      res.download(filePath, fileName, (err) => {
-        if (err) {
-          res.status(500).json({ error: "Failed to download the file." });
-        }
-      });
     })
     .catch((err) => {
       res.status(500).json({ error: "Failed to fetch home" });
