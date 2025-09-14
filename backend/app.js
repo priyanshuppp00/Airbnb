@@ -81,8 +81,8 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production for HTTPS
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-site in production
+      secure: false, // false in dev for localhost
+      sameSite: "lax", // 'lax' for same-site
     },
   })
 );

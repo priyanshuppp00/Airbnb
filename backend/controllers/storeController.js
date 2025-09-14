@@ -10,6 +10,7 @@ exports.getIndex = (req, res, next) => {
       ? `${req.protocol}://${req.get("host")}`
       : "";
   Home.find()
+    .limit(20)
     .then((homes) => {
       const homesWithPhotoUrl = homes.map((home) => {
         return {
