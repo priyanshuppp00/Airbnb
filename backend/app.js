@@ -81,18 +81,14 @@ app.use(
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
-      domain:
-        process.env.NODE_ENV === "production"
-          ? process.env.COOKIE_DOMAIN
-          : undefined,
+      secure: false, // false in dev for localhost
+      sameSite: "lax",
+      domain: "https://airbnb-henna-eight.vercel.app/",
     },
   })
 );
-
 // Middleware to log session and cookie info on each request
 app.use((req, res, next) => {
   console.log("Session ID:", req.sessionID);
