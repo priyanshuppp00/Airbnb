@@ -44,7 +44,22 @@ const morgan = require("morgan");
 app.use(morgan("dev"));
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || "http://localhost:5173",
+    ];
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // Check if the origin matches any allowed origin, ignoring trailing slash
+    const isAllowed = allowedOrigins.some((allowed) => {
+      return origin === allowed || origin === allowed.replace(/\/$/, "");
+    });
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 };
 app.use(cors(corsOptions));
