@@ -11,13 +11,13 @@ const apiClient = axios.create({
 // Store API functions
 export const storeAPI = {
   // Get all homes
-  getHomes: () => apiClient.get("/api/store/"),
+  getHomes: () => apiClient.get("/store/"),
 
   // Get home details by ID
-  getHomeDetails: (homeId) => apiClient.get(`/api/store/homes/${homeId}`),
+  getHomeDetails: (homeId) => apiClient.get(`/store/homes/${homeId}`),
 
   // Get home rules by ID
-  getHomeRules: (homeId) => apiClient.get(`/api/store/rules/${homeId}`),
+  getHomeRules: (homeId) => apiClient.get(`/store/rules/${homeId}`),
 
   // Download rules PDF
   downloadRules: (homeId) =>
@@ -27,7 +27,7 @@ export const storeAPI = {
   addToBooking: (homeId) => apiClient.post("/api/store/bookings", { homeId }),
 
   // Get bookings list
-  getBookings: () => apiClient.get("/api/store/bookings"),
+  getBookings: () => apiClient.get("/store/bookings"),
 
   // Remove home from bookings
   removeFromBooking: (homeId) => apiClient.delete(`/store/bookings/${homeId}`),
@@ -46,16 +46,16 @@ export const storeAPI = {
 // Auth API functions
 export const authAPI = {
   // Get current user
-  getCurrentUser: () => apiClient.get("/api/auth/current-user"),
+  getCurrentUser: () => apiClient.get("/auth/current-user"),
 
   // User login
-  login: (credentials) => apiClient.post("/api/auth/login", credentials),
+  login: (credentials) => apiClient.post("/auth/login", credentials),
 
   // User signup
-  signup: (userData) => apiClient.post("/api/auth/signup", userData),
+  signup: (userData) => apiClient.post("/auth/signup", userData),
 
   // User logout
-  logout: () => apiClient.post("/api/auth/logout"),
+  logout: () => apiClient.post("/auth/logout"),
 
   // Forgot password
   forgotPassword: (email) => apiClient.post("/auth/forgot-password", { email }),
