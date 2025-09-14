@@ -107,7 +107,13 @@ const HomeList = () => {
     }
   };
 
-  if (loading) return <Spinner />;
+  if (loading)
+    return (
+      <Spinner
+        message="Loading your homes..."
+        timeoutMessage="Loading homes is taking longer than usual. Please wait."
+      />
+    );
 
   if (error) {
     return (

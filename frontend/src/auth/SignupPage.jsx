@@ -4,6 +4,7 @@ import { UserContext } from "../context/UserContext";
 import { authAPI } from "../service/api";
 import toast, { Toaster } from "react-hot-toast";
 import { AppContext } from "../context/AppContext";
+import Spinner from "../Components/Spinner";
 
 const SignupPage = () => {
   const { login } = useContext(UserContext);
@@ -112,7 +113,17 @@ const SignupPage = () => {
   return (
     <div className="pt-24 flex flex-col items-center justify-center min-h-screen bg-gray-100 px-4">
       <Toaster position="top-center" />
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+      {loading && (
+        <Spinner
+          message="Please wait Registering..."
+          timeoutMessage="Registration is taking longer than usual. Please wait."
+        />
+      )}
+      <div
+        className={`w-full max-w-md bg-white p-6 rounded-lg shadow-lg ${
+          loading ? "filter blur-sm" : ""
+        }`}
+      >
         <h2 className="mb-6 text-3xl font-bold text-center">Sign Up</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">

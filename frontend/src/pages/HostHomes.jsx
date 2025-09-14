@@ -56,7 +56,13 @@ const HostHomes = () => {
     }
   };
 
-  if (loading) return <Spinner />;
+  if (loading)
+    return (
+      <Spinner
+        message="Loading your homes..."
+        timeoutMessage="Loading your homes is taking longer than usual. Please wait."
+      />
+    );
 
   if (error) {
     return (

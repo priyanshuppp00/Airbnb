@@ -4,6 +4,7 @@ import { AppContext } from "../context/AppContext";
 import { UserContext } from "../context/UserContext";
 import { authAPI } from "../service/api";
 import toast, { Toaster } from "react-hot-toast";
+import Spinner from "../Components/Spinner";
 
 const LoginPage = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -52,7 +53,17 @@ const LoginPage = () => {
   return (
     <main className="pt-24 flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
       <Toaster position="top-center" reverseOrder={false} />
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+      {loading && (
+        <Spinner
+          message="Please wait logging in..."
+          timeoutMessage="Login is taking longer than usual. Please wait."
+        />
+      )}
+      <div
+        className={`w-full max-w-md bg-white p-6 rounded-lg shadow-lg ${
+          loading ? "filter blur-sm" : ""
+        }`}
+      >
         <h1 className="mb-6 text-3xl font-bold text-center text-gray-800">
           Login
         </h1>

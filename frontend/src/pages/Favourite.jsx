@@ -64,7 +64,13 @@ const Favourite = () => {
     }
   };
 
-  if (loading || userLoading) return <Spinner />;
+  if (loading || userLoading)
+    return (
+      <Spinner
+        message="Loading your favourites homes..."
+        timeoutMessage="Loading favourites is taking longer than usual. Please wait."
+      />
+    );
 
   if (error) {
     return (

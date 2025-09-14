@@ -55,7 +55,13 @@ const Booking = () => {
       .finally(() => setRemovingId(null));
   };
 
-  if (loading || userLoading) return <Spinner />;
+  if (loading || userLoading)
+    return (
+      <Spinner
+        message="Loading your bookings details..."
+        timeoutMessage="Loading bookings is taking longer than usual. Please wait."
+      />
+    );
 
   if (error) {
     return (

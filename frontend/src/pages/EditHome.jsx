@@ -45,7 +45,13 @@ const EditHome = () => {
     }
   };
 
-  if (loading) return <Spinner />;
+  if (loading)
+    return (
+      <Spinner
+        message="Loading your home details..."
+        timeoutMessage="Loading home details is taking longer than usual. Please wait."
+      />
+    );
 
   if (error)
     return (

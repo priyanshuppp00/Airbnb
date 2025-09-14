@@ -86,6 +86,7 @@ app.use(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // true in production for HTTPS
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-site in production
+      domain: process.env.COOKIE_DOMAIN || undefined, // set to '.yourdomain.com' for cross-site
     },
   })
 );
