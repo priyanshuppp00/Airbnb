@@ -57,7 +57,7 @@ const Profile = () => {
       <Toaster position="top-center" reverseOrder={false} />
       <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
         <h2 className="mb-2 text-3xl font-bold text-center text-gray-800">
-          Profile
+          Edit Profile
         </h2>
         {!editMode ? (
           <>

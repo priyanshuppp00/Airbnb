@@ -49,7 +49,7 @@ const LoginPopup = ({ onClose }) => {
             onClick={handleSignupNow}
             className="px-4 py-2 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:bg-green-700 hover:scale-105 hover:shadow-2xl bg-green-600 cursor-pointer"
           >
-            Signup Now
+            Register Now
           </button>
           <button
             onClick={handleClose}

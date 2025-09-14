@@ -1,7 +1,7 @@
 import { useContext, useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBars, FaTimes } from "react-icons/fa";
-import { Menu, X, Search, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { AppContext } from "../context/AppContext";
 import { UserContext } from "../context/UserContext";
 
@@ -75,15 +75,7 @@ const Navbar = () => {
               ? "bg-red-100 text-gray-900"
               : "bg-red-500 text-slate-100"
           }`}
-        >
-          <input
-            type="text"
-            placeholder="Search destinations"
-            className="w-48 bg-transparent outline-none md:w-64"
-            aria-label="Search destinations"
-          />
-          <Search className="w-4 h-4 ml-2" />
-        </div>
+        ></div>
 
         {/* Desktop Links */}
         <ul className="items-center hidden gap-6 md:flex" role="menubar">
@@ -218,16 +210,6 @@ const Navbar = () => {
               </li>
             ))}
           </ul>
-
-          <div className="flex items-center px-4 py-2 mt-4 bg-red-500 rounded-full">
-            <input
-              type="text"
-              placeholder="Search destinations"
-              className="w-full text-white placeholder-white bg-transparent outline-none"
-              aria-label="Search destinations"
-            />
-            <Search className="w-5 h-5 ml-2 text-white" />
-          </div>
 
           {/* Extra Mobile Dropdown Links */}
           <div className="pt-4 border-t border-white/30">
