@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import Spinner from "../Components/Spinner";
 
 const Contact = () => {
   const [form, setForm] = useState({
@@ -47,8 +48,17 @@ const Contact = () => {
   return (
     <div className="pt-24 flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4">
       <Toaster position="top-center" reverseOrder={false} />
-
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+      {loading && (
+        <Spinner
+          message="Sending message..."
+          timeoutMessage="Sending message is taking longer than usual. Please wait."
+        />
+      )}
+      <div
+        className={`w-full max-w-md bg-white p-6 rounded-lg shadow-lg ${
+          loading ? "filter blur-sm" : ""
+        }`}
+      >
         <h1 className="mb-6 text-3xl font-bold text-center text-gray-800">
           Contact Us
         </h1>

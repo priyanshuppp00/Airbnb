@@ -101,7 +101,7 @@ const SignupPage = () => {
       const res = await authAPI.signup(formData);
       login(res.data.user);
       toast.success("Signup successful! redirecting for login...");
-      navigate("/login"); // Redirect to home/dashboard after signup
+      navigate("/"); // Redirect to home/dashboard after signup
     } catch (err) {
       const apiErrors = err.response?.data?.errors || [];
       toast.error(apiErrors.length ? apiErrors.join(", ") : "Signup failed");

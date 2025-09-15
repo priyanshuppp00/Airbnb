@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { hostAPI } from "../service/api";
+import Spinner from "../Components/Spinner";
 
 const AddHome = () => {
   const navigate = useNavigate();
@@ -110,7 +111,17 @@ const AddHome = () => {
   return (
     <div className="pt-20 flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
       <Toaster position="top-center" reverseOrder={false} />
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
+      {isLoading && (
+        <Spinner
+          message="Adding home..."
+          timeoutMessage="Adding home is taking longer than usual. Please wait."
+        />
+      )}
+      <div
+        className={`w-full max-w-md bg-white p-6 rounded-lg shadow-lg ${
+          isLoading ? "filter blur-sm" : ""
+        }`}
+      >
         <h2 className="mb-2 text-3xl font-bold text-center text-gray-800">
           Add Home
         </h2>

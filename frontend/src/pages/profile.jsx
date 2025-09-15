@@ -4,6 +4,7 @@ import { authAPI } from "../service/api";
 import ProfileForm from "../Components/ProfileForm";
 import { Toaster } from "react-hot-toast";
 import _ from "lodash"; // ✅ Import lodash
+import Spinner from "../Components/Spinner";
 
 const Profile = () => {
   const { user, loading, fetchUser } = useContext(UserContext);
@@ -19,6 +20,7 @@ const Profile = () => {
     profilePic: null,
   });
   const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -37,6 +39,7 @@ const Profile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const response = await authAPI.updateProfile(formData);
       setMessage(response.data.message);
@@ -46,11 +49,20 @@ const Profile = () => {
       setTimeout(() => setMessage(""), 3000);
     } catch {
       setMessage("Failed to update profile");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Spinner message="Loading user profile..." />;
   if (!user) return <div>Please log in to view your profile.</div>;
+
+  // Fallback for profilePic and initials
+  const profilePicUrl = user.profilePic
+    ? user.profilePic
+    : `https://ui-avatars.com/api/?name=${
+        user.firstName || user.lastName || user.email.split("@")[0]
+      }&background=E5E7EB&color=111827`;
 
   return (
     <div className="pt-20 flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
@@ -63,11 +75,7 @@ const Profile = () => {
           <>
             <div className="flex flex-col items-center">
               <img
-                src={
-                  user.profilePic
-                    ? user.profilePic
-                    : `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=E5E7EB&color=111827`
-                }
+                src={profilePicUrl}
                 alt="Profile"
                 className="w-40 h-40 rounded-full mb-4 object-cover"
               />
@@ -113,6 +121,7 @@ const Profile = () => {
             handleSubmit={handleSubmit}
             message={message}
             setEditMode={setEditMode}
+            submitting={submitting}
           />
         )}
       </div>

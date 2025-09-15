@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Spinner from "./Spinner";
 
 const ProfileForm = ({
   formData,
@@ -6,7 +7,20 @@ const ProfileForm = ({
   handleSubmit,
   message,
   setEditMode,
+  submitting,
 }) => {
+  const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    if (formData.profilePic && typeof formData.profilePic === "object") {
+      const url = URL.createObjectURL(formData.profilePic);
+      setPreview(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreview(null);
+    }
+  }, [formData.profilePic]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -36,6 +50,7 @@ const ProfileForm = ({
               onChange={handleChange}
               className="w-full border border-gray-300 rounded px-3 py-2"
               required={field === "firstName" || field === "email"}
+              disabled={submitting}
             />
           </div>
         )
@@ -57,7 +72,15 @@ const ProfileForm = ({
           }
           className="w-full border border-gray-300 rounded px-3 py-2"
           accept="image/*"
+          disabled={submitting}
         />
+        {preview && (
+          <img
+            src={preview}
+            alt="Profile Preview"
+            className="w-20 h-20 rounded-full object-cover mt-2 mx-auto"
+          />
+        )}
       </div>
 
       <div>
@@ -70,6 +93,7 @@ const ProfileForm = ({
           value={formData.userType}
           onChange={handleChange}
           className="w-full border border-gray-300 rounded px-3 py-2"
+          disabled={submitting}
         >
           <option value="guest">Guest</option>
           <option value="host">Host</option>
@@ -77,19 +101,25 @@ const ProfileForm = ({
       </div>
 
       <div className="text-center">
-        <button
-          type="submit"
-          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105"
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={() => setEditMode(false)}
-          className="px-4 py-2 ml-4 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 cursor-pointer"
-        >
-          Cancel
-        </button>
+        {submitting ? (
+          <Spinner message="Updating profile..." />
+        ) : (
+          <>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditMode(false)}
+              className="px-4 py-2 ml-4 bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 cursor-pointer"
+            >
+              Cancel
+            </button>
+          </>
+        )}
       </div>
 
       {message && (

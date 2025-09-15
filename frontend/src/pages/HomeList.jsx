@@ -110,7 +110,7 @@ const HomeList = () => {
   if (loading)
     return (
       <Spinner
-        message="Loading your homes..."
+        message="Loading All homes..."
         timeoutMessage="Loading homes is taking longer than usual. Please wait."
       />
     );

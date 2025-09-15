@@ -34,4 +34,6 @@ authRouter.put(
   authController.updateUserProfile
 );
 
+authRouter.get("/profile-pic/:userId", authController.getProfilePic);
+
 module.exports = authRouter;
