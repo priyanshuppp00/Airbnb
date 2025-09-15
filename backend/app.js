@@ -5,6 +5,7 @@ const path = require("path");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
 
 // Load env vars
 dotenv.config();
@@ -20,19 +21,13 @@ const errorHandler = require("./middleware/errorHandler");
 const sessionStore = require("./config/sessionStore");
 
 const PORT = process.env.PORT || 3000;
+
 const cors = require("cors");
 
 const app = express();
 
-// Log environment variables for debugging
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("COOKIE_DOMAIN:", process.env.COOKIE_DOMAIN);
-
 // Trust proxy for secure cookies behind load balancer
 app.set("trust proxy", 1);
-
-// Security middleware
-app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -46,23 +41,18 @@ connectDB();
 
 const corsOptions = {
   origin: function (origin, callback) {
-    console.log("CORS origin:", origin);
     const allowedOrigins = [
-      process.env.FRONTEND_URL || "http://localhost:3000",
+      (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, ""),
       "http://localhost:5173",
-      "https://airbnb-henna-eight.vercel.app/", // Always allow local frontend
+      "https://airbnb-henna-eight.vercel.app",
     ];
-    console.log("Allowed origins:", allowedOrigins);
-    // Allow requests with no origin (like mobile apps or curl requests)
+
     if (!origin) return callback(null, true);
-    // Check if the origin matches any allowed origin, ignoring trailing slash
     const isAllowed = allowedOrigins.some((allowed) => {
       const normalizedOrigin = origin.replace(/\/$/, "");
       const normalizedAllowed = allowed.replace(/\/$/, "");
-      console.log("Checking:", normalizedOrigin, "vs", normalizedAllowed);
       return normalizedOrigin === normalizedAllowed;
     });
-    console.log("Is allowed:", isAllowed);
     if (isAllowed) {
       callback(null, true);
     } else {
@@ -72,6 +62,9 @@ const corsOptions = {
   credentials: true,
 };
 app.use(cors(corsOptions));
+
+// Add cookie-parser middleware
+app.use(cookieParser());
 
 // Session middleware
 app.use(
@@ -83,19 +76,12 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,
-      secure: false, // false in dev for localhost
-      sameSite: "lax",
-      domain: "https://airbnb-henna-eight.vercel.app/",
+      secure: process.env.NODE_ENV === "production" ? true : false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      // Removed domain property to allow default behavior
     },
   })
 );
-// Middleware to log session and cookie info on each request
-app.use((req, res, next) => {
-  console.log("Session ID:", req.sessionID);
-  console.log("Session Data:", req.session);
-  console.log("Cookies:", req.headers.cookie);
-  next();
-});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
