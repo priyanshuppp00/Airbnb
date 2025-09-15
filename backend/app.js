@@ -5,7 +5,6 @@ const path = require("path");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const cookieParser = require("cookie-parser");
 
 // Load env vars
 dotenv.config();
@@ -21,13 +20,12 @@ const errorHandler = require("./middleware/errorHandler");
 const sessionStore = require("./config/sessionStore");
 
 const PORT = process.env.PORT || 3000;
-
 const cors = require("cors");
 
 const app = express();
 
-// Trust proxy for secure cookies behind load balancer
-app.set("trust proxy", 1);
+// Security middleware
+app.use(helmet());
 
 // Rate limiting
 const limiter = rateLimit({
@@ -39,32 +37,36 @@ app.use(limiter);
 
 connectDB();
 
+// Logging middleware for debugging
+const morgan = require("morgan");
+
+// Use morgan for logging HTTP requests
+app.use(morgan("dev"));
+
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, ""),
-      "http://localhost:5173",
-      "https://airbnb-henna-eight.vercel.app",
+      process.env.FRONTEND_URL || "http://localhost:3000",
+      "http://localhost:5173", // local frontend
+      "https://airbnb-henna-eight.vercel.app", // prod frontend
     ];
 
     if (!origin) return callback(null, true);
+
     const isAllowed = allowedOrigins.some((allowed) => {
-      const normalizedOrigin = origin.replace(/\/$/, "");
-      const normalizedAllowed = allowed.replace(/\/$/, "");
-      return normalizedOrigin === normalizedAllowed;
+      return origin.replace(/\/$/, "") === allowed.replace(/\/$/, "");
     });
+
     if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error("Not allowed by CORS: " + origin));
     }
   },
-  credentials: true,
+  credentials: true, // ✅ allow cookies
 };
-app.use(cors(corsOptions));
 
-// Add cookie-parser middleware
-app.use(cookieParser());
+app.use(cors(corsOptions));
 
 // Session middleware
 app.use(
@@ -76,9 +78,10 @@ app.use(
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // 1 day
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" ? true : false,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      // Removed domain property to allow default behavior
+      secure: process.env.NODE_ENV === "production", // ✅ HTTPS only in production
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // ✅ 'none' for cross-site cookies
+      domain:
+        process.env.NODE_ENV === "production" ? ".onrender.com" : undefined, // ✅ only set in prod if needed
     },
   })
 );
