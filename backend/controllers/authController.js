@@ -79,22 +79,56 @@ exports.postLogin = async (req, res, next) => {
       return res.status(422).json({ errors: ["Invalid Password"] });
     }
 
-    req.session.isLoggedIn = true;
-    req.session.user = user;
-    // Touch session to reset expiration on login
-    req.session.touch();
-    await req.session.save();
+    // 🔹 Create safe user object for response
+    const {
+      password: _,
+      profilePic,
+      profilePicMimeType,
+      ...userData
+    } = user.toObject();
 
-    const { password: _, ...userWithoutPassword } = user.toObject();
-    if (user.profilePic) {
-      userWithoutPassword.profilePic = `data:${
-        user.profilePicMimeType
-      };base64,${user.profilePic.toString("base64")}`;
+    if (profilePic) {
+      userData.profilePic = `data:${profilePicMimeType};base64,${profilePic.toString(
+        "base64"
+      )}`;
     }
-    return res
-      .status(200)
-      .json({ message: "Login successful", user: userWithoutPassword });
+
+    // 🔹 Regenerate session (fresh session ID for security)
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("❌ Session regenerate failed:", err);
+        return res
+          .status(500)
+          .json({ errors: ["Login failed, session issue"] });
+      }
+
+      // Save only minimal safe data in session
+      req.session.isLoggedIn = true;
+      req.session.user = {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        userType: user.userType,
+        city: user.city,
+      };
+
+      req.session.save((err) => {
+        if (err) {
+          console.error("❌ Session save failed:", err);
+          return res
+            .status(500)
+            .json({ errors: ["Login failed, session not saved"] });
+        }
+
+        return res.status(200).json({
+          message: "Login successful",
+          user: userData,
+        });
+      });
+    });
   } catch (err) {
+    console.error("❌ Login error:", err);
     return res.status(500).json({ errors: ["Login failed: " + err.message] });
   }
 };
