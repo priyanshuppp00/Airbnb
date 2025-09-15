@@ -31,10 +31,14 @@ export const AppProvider = ({ children }) => {
   // ----------------------------
   const fetchCurrentUser = async () => {
     try {
-      const res = await authAPI.getCurrentUser();
-      setUser(res.data);
+      const sessionData = await authAPI.checkSession();
+      if (sessionData.loggedIn && sessionData.user) {
+        setUser(sessionData.user);
+      } else {
+        setUser(null);
+      }
     } catch (err) {
-      console.error("Failed to fetch user", err);
+      console.error("Failed to check session", err);
       setUser(null);
     }
   };

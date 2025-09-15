@@ -69,16 +69,13 @@ exports.updateUserProfile = async (req, res, next) => {
 exports.postLogin = async (req, res, next) => {
   const { email, password } = req.body;
   try {
-    console.log("Login attempt for email:", email);
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("User not found");
       return res.status(422).json({ errors: ["User does not exist"] });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("Invalid password");
       return res.status(422).json({ errors: ["Invalid Password"] });
     }
 
@@ -87,8 +84,6 @@ exports.postLogin = async (req, res, next) => {
     // Touch session to reset expiration on login
     req.session.touch();
     await req.session.save();
-
-    console.log("Session after login:", req.session);
 
     const { password: _, ...userWithoutPassword } = user.toObject();
     if (user.profilePic) {
@@ -100,7 +95,6 @@ exports.postLogin = async (req, res, next) => {
       .status(200)
       .json({ message: "Login successful", user: userWithoutPassword });
   } catch (err) {
-    console.log("Login error:", err);
     return res.status(500).json({ errors: ["Login failed: " + err.message] });
   }
 };
@@ -141,7 +135,6 @@ exports.postSignup = async (req, res, next) => {
       password: hashedPassword,
     });
     if (req.file) {
-      console.log("Saving profilePic in signup");
       user.profilePic = req.file.buffer;
       user.profilePicMimeType = req.file.mimetype;
     }
