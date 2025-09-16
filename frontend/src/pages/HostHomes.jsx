@@ -16,6 +16,8 @@ const HostHomes = () => {
       .then((res) => {
         if (Array.isArray(res.data)) {
           setHomes(res.data);
+        } else if (res.data && Array.isArray(res.data.homes)) {
+          setHomes(res.data.homes);
         } else {
           setError("Invalid data received.");
         }

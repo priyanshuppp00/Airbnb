@@ -18,10 +18,10 @@ const Spinner = ({
   }, [isFailed]);
 
   // ✅ Tailwind safe classes
-  const colorClass = type === "auth" ? "border-red-500" : "border-red-500";
-  const backdropClass = type === "auth" ? "backdrop-blur-sm" : "bg-transparent";
+  const colorClass = type === "auth" ? "border-red-500" : "border-red-800";
+  const backdropClass = type === "auth" ? "bg-transparent" : "bg-transparent";
   const textClass = type === "auth" ? "text-red-500" : "text-black";
-  const timeoutTextClass = type === "auth" ? "text-white" : "text-gray-500";
+  const timeoutTextClass = type === "auth" ? "text-red-500" : "text-black";
   const textSizeClass = type === "auth" ? "text-lg" : "text-xl";
 
   const displayMessage =
