@@ -13,18 +13,29 @@ const HomeList = () => {
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [isFailed, setIsFailed] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [bookingId, setBookingId] = useState(null);
   const [favouriteId, setFavouriteId] = useState(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [selectedHome, setSelectedHome] = useState(null);
-  const [userBookings, setUserBookings] = useState([]);
-  const [userFavourites, setUserFavourites] = useState([]);
   const { refreshBookings, refreshFavourites } = useContext(AppContext);
-  const { user } = useContext(UserContext);
+  const {
+    user,
+    userBookings,
+    setUserBookings,
+    userFavourites,
+    setUserFavourites,
+  } = useContext(UserContext);
 
-  const fetchHomes = () => {
-    setLoading(true);
+  const fetchHomes = (page = 1) => {
+    if (page === 1) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     setIsFailed(false);
     setProgress(0);
     const progressInterval = setInterval(() => {
@@ -32,10 +43,16 @@ const HomeList = () => {
     }, 200);
 
     storeAPI
-      .getHomes()
+      .getHomes(page)
       .then((res) => {
-        if (Array.isArray(res.data)) {
-          setHomes(res.data);
+        if (res.data && Array.isArray(res.data.homes)) {
+          if (page === 1) {
+            setHomes(res.data.homes);
+          } else {
+            setHomes((prev) => [...prev, ...res.data.homes]);
+          }
+          setTotalPages(res.data.totalPages);
+          setCurrentPage(res.data.currentPage);
           setProgress(100);
         } else {
           throw new Error("Invalid data received.");
@@ -47,6 +64,7 @@ const HomeList = () => {
       .finally(() => {
         clearInterval(progressInterval);
         setLoading(false);
+        setLoadingMore(false);
       });
   };
 
@@ -54,35 +72,6 @@ const HomeList = () => {
   useEffect(() => {
     fetchHomes();
   }, []);
-
-  // Fetch user bookings & favourites when user changes
-  useEffect(() => {
-    if (user) {
-      // Fetch bookings
-      storeAPI
-        .getBookings()
-        .then((res) => {
-          if (Array.isArray(res.data)) {
-            setUserBookings(res.data.map((b) => b._id));
-          }
-        })
-        .catch(() => {});
-
-      // Fetch favourites
-      storeAPI
-        .getFavourites()
-        .then((res) => {
-          if (Array.isArray(res.data)) {
-            setUserFavourites(res.data.map((f) => f._id));
-          }
-        })
-        .catch(() => {});
-    } else {
-      // Clear on logout
-      setUserBookings([]);
-      setUserFavourites([]);
-    }
-  }, [user]);
 
   const handleBookNow = (home) => {
     if (!user) {
@@ -100,6 +89,8 @@ const HomeList = () => {
       toast.success("Booked successfully!");
       setUserBookings((prev) => [...prev, bookingData.homeId]);
       refreshBookings?.();
+      // Refetch homes to update UI if needed
+      fetchHomes(1);
     } catch {
       alert("Failed to book home.");
     } finally {
@@ -118,6 +109,8 @@ const HomeList = () => {
       toast.success("Added to favourites!");
       setUserFavourites((prev) => [...prev, homeId]);
       refreshFavourites?.();
+      // Refetch homes to update UI if needed
+      fetchHomes(1);
     } catch {
       alert("Failed to add to favourites.");
     } finally {
@@ -251,6 +244,23 @@ const HomeList = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Load More Button */}
+        {currentPage < totalPages && (
+          <div className="flex justify-center mt-8">
+            <button
+              onClick={() => fetchHomes(currentPage + 1)}
+              disabled={loadingMore}
+              className={`px-6 py-3 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
+                loadingMore
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+              }`}
+            >
+              {loadingMore ? "Loading..." : "Load More"}
+            </button>
           </div>
         )}
       </div>

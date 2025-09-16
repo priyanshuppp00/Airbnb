@@ -1,11 +1,13 @@
 import React, { createContext, useState, useEffect } from "react";
-import { authAPI } from "../service/api";
+import { authAPI, storeAPI } from "../service/api";
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userBookings, setUserBookings] = useState([]);
+  const [userFavourites, setUserFavourites] = useState([]);
 
   useEffect(() => {
     fetchUser();
@@ -24,14 +26,60 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  const fetchUserData = async () => {
+    if (user) {
+      try {
+        const [bookingsRes, favouritesRes] = await Promise.all([
+          storeAPI.getBookings(),
+          storeAPI.getFavourites(),
+        ]);
+        if (Array.isArray(bookingsRes.data)) {
+          const bookings = bookingsRes.data.map((b) => b._id);
+          setUserBookings(bookings);
+          localStorage.setItem("userBookings", JSON.stringify(bookings));
+        }
+        if (Array.isArray(favouritesRes.data)) {
+          const favourites = favouritesRes.data.map((f) => f._id);
+          setUserFavourites(favourites);
+          localStorage.setItem("userFavourites", JSON.stringify(favourites));
+        }
+      } catch (err) {
+        console.error("Failed to fetch user data:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+    } else {
+      setUserBookings([]);
+      setUserFavourites([]);
+      localStorage.removeItem("userBookings");
+      localStorage.removeItem("userFavourites");
+    }
+  }, [user]);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedBookings = localStorage.getItem("userBookings");
+    const savedFavourites = localStorage.getItem("userFavourites");
+    if (savedBookings) {
+      setUserBookings(JSON.parse(savedBookings));
+    }
+    if (savedFavourites) {
+      setUserFavourites(JSON.parse(savedFavourites));
+    }
+  }, []);
+
   const login = (userData) => {
     setUser(userData);
   };
 
   const clearUserData = () => {
     setUser(null);
-    // You can clear more user-related states here if you store them in this context
-    // For example: setFavorites([]), setBookings([]), etc.
+    setUserBookings([]);
+    setUserFavourites([]);
   };
 
   const logout = async () => {
@@ -53,9 +101,14 @@ export const UserProvider = ({ children }) => {
       value={{
         user,
         loading,
+        userBookings,
+        setUserBookings,
+        userFavourites,
+        setUserFavourites,
         login,
         logout,
         fetchUser,
+        fetchUserData,
         isAuthenticated,
         clearUserData,
       }}

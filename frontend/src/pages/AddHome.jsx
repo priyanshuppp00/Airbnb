@@ -113,6 +113,7 @@ const AddHome = () => {
       <Toaster position="top-center" reverseOrder={false} />
       {isLoading && (
         <Spinner
+          type="auth"
           message="Adding home..."
           timeoutMessage="Adding home is taking longer than usual. Please wait."
         />

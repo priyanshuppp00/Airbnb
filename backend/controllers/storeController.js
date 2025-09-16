@@ -4,36 +4,46 @@ const path = require("path");
 
 const rootDir = require("../utils/pathUtil");
 
-exports.getIndex = (req, res, next) => {
-  const baseUrl =
-    process.env.NODE_ENV === "production"
-      ? `${req.protocol}://${req.get("host")}`
-      : "";
-  Home.find()
-    .limit(20)
-    .then((homes) => {
-      const homesWithPhotoUrl = homes.map((home) => {
-        return {
-          _id: home._id,
-          houseName: home.houseName,
-          price: home.price,
-          location: home.location,
-          rating: home.rating,
-          description: home.description,
-          photoUrl: home.photo
-            ? Buffer.isBuffer(home.photo)
-              ? `data:${home.photoMimeType};base64,${home.photo.toString(
-                  "base64"
-                )}`
-              : `${baseUrl}/uploads/${path.basename(home.photo)}`
-            : null,
-        };
-      });
-      res.json(homesWithPhotoUrl);
-    })
-    .catch((err) => {
-      res.status(500).json({ error: "Failed to fetch homes" });
+exports.getIndex = async (req, res, next) => {
+  try {
+    const baseUrl =
+      process.env.NODE_ENV === "production"
+        ? `${req.protocol}://${req.get("host")}`
+        : "";
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalHomes = await Home.countDocuments();
+    const homes = await Home.find().skip(skip).limit(limit);
+
+    const homesWithPhotoUrl = homes.map((home) => {
+      return {
+        _id: home._id,
+        houseName: home.houseName,
+        price: home.price,
+        location: home.location,
+        rating: home.rating,
+        description: home.description,
+        photoUrl: home.photo
+          ? Buffer.isBuffer(home.photo)
+            ? `data:${home.photoMimeType};base64,${home.photo.toString(
+                "base64"
+              )}`
+            : `${baseUrl}/uploads/${path.basename(home.photo)}`
+          : null,
+      };
     });
+
+    res.json({
+      homes: homesWithPhotoUrl,
+      totalPages: Math.ceil(totalHomes / limit),
+      currentPage: page,
+      totalHomes,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch homes" });
+  }
 };
 
 exports.getBookingsList = async (req, res, next) => {

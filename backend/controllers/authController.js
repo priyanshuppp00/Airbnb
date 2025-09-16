@@ -60,7 +60,7 @@ exports.updateUserProfile = async (req, res) => {
     const safeUser = buildSafeUser(user);
 
     req.session.user = {
-      _id: user._id,
+      _id: user._id.toString(),
       firstName: user.firstName,
       middleName: user.middleName,
       lastName: user.lastName,
@@ -102,7 +102,15 @@ exports.postLogin = async (req, res, next) => {
           .json({ errors: ["Login failed, session issue"] });
 
       req.session.isLoggedIn = true;
-      req.session.user = safeUser;
+      req.session.user = {
+        _id: user._id.toString(),
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        email: user.email,
+        userType: user.userType,
+        city: user.city,
+      };
 
       req.session.save((err) => {
         if (err)
@@ -164,7 +172,13 @@ exports.postSignup = async (req, res, next) => {
     const safeUser = buildSafeUser(user);
 
     req.session.isLoggedIn = true;
-    req.session.user = safeUser;
+    req.session.user = {
+      _id: user._id.toString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      userType: user.userType,
+    };
 
     req.session.save((err) => {
       if (err)

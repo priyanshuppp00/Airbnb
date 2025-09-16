@@ -11,7 +11,8 @@ const apiClient = axios.create({
 
 // Store API functions
 export const storeAPI = {
-  getHomes: () => apiClient.get("/api/store/"),
+  getHomes: (page = 1, limit = 10) =>
+    apiClient.get(`/api/store/?page=${page}&limit=${limit}`),
   getHomeDetails: (homeId) => apiClient.get(`/api/store/homes/${homeId}`),
   getHomeRules: (homeId) => apiClient.get(`/api/store/rules/${homeId}`),
   downloadRules: (homeId) =>
@@ -29,6 +30,7 @@ export const storeAPI = {
 
 // Auth API functions
 export const authAPI = {
+  checkSession: () => apiClient.get("/api/auth/current-user"),
   getCurrentUser: () => apiClient.get("/api/auth/current-user"),
   login: (credentials) => apiClient.post("/api/auth/login", credentials),
   signup: (userData) => apiClient.post("/api/auth/signup", userData),
