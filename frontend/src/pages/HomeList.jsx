@@ -11,7 +11,8 @@ import toast, { Toaster } from "react-hot-toast";
 const HomeList = () => {
   const [homes, setHomes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [isFailed, setIsFailed] = useState(false);
   const [bookingId, setBookingId] = useState(null);
   const [favouriteId, setFavouriteId] = useState(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
@@ -22,19 +23,36 @@ const HomeList = () => {
   const { refreshBookings, refreshFavourites } = useContext(AppContext);
   const { user } = useContext(UserContext);
 
-  // Fetch homes once
-  useEffect(() => {
+  const fetchHomes = () => {
+    setLoading(true);
+    setIsFailed(false);
+    setProgress(0);
+    const progressInterval = setInterval(() => {
+      setProgress((p) => Math.min(p + 10, 90));
+    }, 200);
+
     storeAPI
       .getHomes()
       .then((res) => {
         if (Array.isArray(res.data)) {
           setHomes(res.data);
+          setProgress(100);
         } else {
-          setError("Invalid data received.");
+          throw new Error("Invalid data received.");
         }
       })
-      .catch(() => setError("Failed to fetch homes."))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        setIsFailed(true);
+      })
+      .finally(() => {
+        clearInterval(progressInterval);
+        setLoading(false);
+      });
+  };
+
+  // Fetch homes once
+  useEffect(() => {
+    fetchHomes();
   }, []);
 
   // Fetch user bookings & favourites when user changes
@@ -107,21 +125,16 @@ const HomeList = () => {
     }
   };
 
-  if (loading)
+  if (loading || isFailed)
     return (
       <Spinner
         message="Loading All homes..."
         timeoutMessage="Loading homes is taking longer than usual. Please wait."
+        progress={progress}
+        isFailed={isFailed}
+        onRetry={fetchHomes}
       />
     );
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-xl font-semibold text-red-500">{error}</p>
-      </div>
-    );
-  }
 
   return (
     <>

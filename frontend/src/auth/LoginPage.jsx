@@ -55,6 +55,7 @@ const LoginPage = () => {
       <Toaster position="top-center" reverseOrder={false} />
       {loading && (
         <Spinner
+          type="auth"
           message="Please wait logging in..."
           timeoutMessage="Login is taking longer than usual. Please wait."
         />
