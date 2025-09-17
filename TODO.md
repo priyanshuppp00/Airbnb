@@ -1,21 +1,18 @@
-# TODO: Optimize Data Fetching and State Management
+# TODO: Implement Cloudinary Image Upload for Airbnb App
 
-## Backend Changes
+## Completed Tasks
 
-- [x] Update backend/controllers/storeController.js to support pagination for getHomes API (add page and limit query params)
-- [x] Test pagination endpoint
-- [x] Fix duplicate session middleware in app.js
+- [x] Analyze codebase and create plan
+- [x] Get user approval for plan
 
-## Frontend Changes
+## Pending Tasks
 
-- [x] Update frontend/src/service/api.js to include pagination params in getHomes
-- [x] Update frontend/src/pages/HomeList.jsx to implement pagination (load more button)
-- [x] Add localStorage persistence for userBookings and userFavourites in HomeList.jsx
-- [x] Update home add/edit/delete components to refetch homes after operations
-- [x] Ensure user context caches data after login/signup
-
-## Testing
-
-- [ ] Test pagination loading
-- [ ] Test state persistence across refreshes
-- [ ] Test home updates reflect immediately
+- [ ] Install Cloudinary package
+- [ ] Create Cloudinary config file with provided credentials
+- [ ] Update Home model schema to use URLs instead of buffers
+- [ ] Update User model schema to use URLs instead of buffers
+- [ ] Update hostController.js for home image uploads to Cloudinary
+- [ ] Update authController.js for profile image uploads to Cloudinary
+- [ ] Update fetching methods to return URLs directly
+- [ ] Test image uploads, updates, and deletions
+- [ ] Verify no breaking changes in frontend
