@@ -21,8 +21,7 @@ const userSchema = mongoose.Schema({
     enum: ["guest", "host"],
     default: "guest",
   },
-  profilePic: String,
-  profilePicMimeType: String,
+  profilePicFilename: String,
   city: String,
   favourites: [
     {

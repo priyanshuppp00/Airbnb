@@ -7,7 +7,7 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     location: "",
     rating: "",
     description: "",
-    photo: null,
+    photos: [],
     rulesFile: null,
   });
 
@@ -33,14 +33,14 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     const { name, value, files } = e.target;
 
     if (files && files.length > 0) {
-      const file = files[0];
-
-      if (name === "photo") {
-        setForm((prev) => ({ ...prev, photo: file }));
-        setPreview(URL.createObjectURL(file));
+      if (name === "photos") {
+        const selectedFiles = Array.from(files);
+        setForm((prev) => ({ ...prev, photos: selectedFiles }));
+        setPreview(selectedFiles.map((file) => URL.createObjectURL(file)));
       }
 
       if (name === "rulesFile") {
+        const file = files[0];
         if (file.type === "application/pdf") {
           setForm((prev) => ({ ...prev, rulesFile: file }));
         } else {
@@ -51,12 +51,6 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
-  };
-
-  const removePhoto = () => {
-    setForm((prev) => ({ ...prev, photo: null }));
-    setPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeRulesFile = () => {
@@ -74,7 +68,7 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     fd.append("rating", form.rating);
     fd.append("description", form.description);
 
-    if (form.photo) fd.append("photo", form.photo);
+    form.photos.forEach((photo) => fd.append("photo", photo));
     if (form.rulesFile) fd.append("rulesFile", form.rulesFile);
 
     onSubmit(fd);
@@ -138,30 +132,46 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
         {/* Photo Upload */}
         <div>
           <label className="block mb-1 text-sm font-medium text-gray-700">
-            Upload House Image
+            Upload House Images
           </label>
           <input
             type="file"
-            name="photo"
+            name="photos"
             accept="image/*"
+            multiple
             ref={fileInputRef}
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none"
           />
-          {preview && (
-            <div className="mt-2">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full h-40 object-cover rounded-md"
-              />
-              <button
-                type="button"
-                onClick={removePhoto}
-                className="text-red-500 mt-1"
-              >
-                Remove Photo
-              </button>
+          {preview && preview.length > 0 && (
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {preview.map((src, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={src}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => {
+                        const newPhotos = [...prev.photos];
+                        newPhotos.splice(index, 1);
+                        return { ...prev, photos: newPhotos };
+                      });
+                      setPreview((prev) => {
+                        const newPreview = [...prev];
+                        newPreview.splice(index, 1);
+                        return newPreview;
+                      });
+                    }}
+                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>

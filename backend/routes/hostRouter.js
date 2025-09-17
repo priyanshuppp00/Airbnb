@@ -13,7 +13,7 @@ hostRouter.get("/homes", hostController.getHomesApi);
 hostRouter.post(
   "/homes",
   upload.fields([
-    { name: "photo", maxCount: 1 },
+    { name: "photo", maxCount: 10 },
     { name: "rulesFile", maxCount: 1 },
   ]),
   hostController.postAddHomeApi
@@ -21,7 +21,7 @@ hostRouter.post(
 hostRouter.put(
   "/homes/:homeId",
   upload.fields([
-    { name: "photo", maxCount: 1 },
+    { name: "photo", maxCount: 10 },
     { name: "rulesFile", maxCount: 1 },
   ]),
   hostController.editHomeApi

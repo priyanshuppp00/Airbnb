@@ -58,8 +58,10 @@ const Profile = () => {
   if (!user) return <div>Please log in to view your profile.</div>;
 
   // Fallback for profilePic and initials
-  const profilePicUrl = user.profilePic
-    ? user.profilePic
+  const profilePicUrl = user.profilePicFilename
+    ? `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/uploads/${
+        user.profilePicFilename
+      }`
     : `https://ui-avatars.com/api/?name=${
         user.firstName || user.lastName || user.email.split("@")[0]
       }&background=E5E7EB&color=111827`;

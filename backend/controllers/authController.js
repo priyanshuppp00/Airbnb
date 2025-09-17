@@ -1,6 +1,8 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const { buildSafeUser } = require("../utils/safeUser");
+const fs = require("fs");
+const path = require("path");
 
 // 🔹 Get current logged-in user
 exports.getCurrentUser = async (req, res, next) => {
@@ -51,8 +53,18 @@ exports.updateUserProfile = async (req, res) => {
 
     // profilePic upload
     if (req.file) {
-      user.profilePic = req.file.buffer.toString("base64");
-      user.profilePicMimeType = req.file.mimetype;
+      // Delete old profile pic
+      if (user.profilePicFilename) {
+        const oldPath = path.join(
+          __dirname,
+          "../uploads",
+          user.profilePicFilename
+        );
+        fs.unlink(oldPath, (err) => {
+          if (err) console.error("Error deleting old profile pic:", err);
+        });
+      }
+      user.profilePicFilename = req.file.filename;
     }
 
     await user.save();
@@ -163,8 +175,7 @@ exports.postSignup = async (req, res, next) => {
     });
 
     if (req.file) {
-      user.profilePic = req.file.buffer.toString("base64");
-      user.profilePicMimeType = req.file.mimetype;
+      user.profilePicFilename = req.file.filename;
     }
 
     await user.save();
@@ -200,12 +211,15 @@ exports.postSignup = async (req, res, next) => {
 exports.getProfilePic = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
-    if (!user || !user.profilePic) {
+    if (!user || !user.profilePicFilename) {
       return res.status(404).send("Profile picture not found");
     }
-    const buffer = Buffer.from(user.profilePic, "base64");
-    res.set("Content-Type", user.profilePicMimeType);
-    res.send(buffer);
+    const filePath = path.join(
+      __dirname,
+      "../uploads",
+      user.profilePicFilename
+    );
+    res.sendFile(filePath);
   } catch (err) {
     console.error("❌ getProfilePic error:", err);
     res.status(500).send("Internal server error");

@@ -1,5 +1,6 @@
 const Home = require("../models/home");
 const fs = require("fs");
+const path = require("path");
 const User = require("../models/user");
 
 exports.postAddHome = (req, res, next) => {
@@ -63,7 +64,24 @@ exports.postEditHome = (req, res, next) => {
 exports.postDeleteHome = (req, res, next) => {
   const homeId = req.params.homeId;
 
-  Home.findByIdAndDelete(homeId)
+  Home.findById(homeId)
+    .then((home) => {
+      if (!home) {
+        return res.status(404).json({ error: "Home not found" });
+      }
+
+      // Delete photos
+      if (home.photos && home.photos.length > 0) {
+        home.photos.forEach((filename) => {
+          const filePath = path.join(__dirname, "../uploads", filename);
+          fs.unlink(filePath, (err) => {
+            if (err) console.error("Error deleting photo:", err);
+          });
+        });
+      }
+
+      return Home.findByIdAndDelete(homeId);
+    })
     .then(() => {
       // Remove the homeId from all users' bookings and favourites arrays
       return User.updateMany(
@@ -79,8 +97,6 @@ exports.postDeleteHome = (req, res, next) => {
     });
 };
 
-const path = require("path");
-
 // API method to get homes as JSON
 exports.getHomesApi = (req, res, next) => {
   Home.find()
@@ -93,11 +109,11 @@ exports.getHomesApi = (req, res, next) => {
           location: home.location,
           rating: home.rating,
           description: home.description,
-          photoUrl: home.photo
-            ? `data:${home.photoMimeType};base64,${home.photo.toString(
-                "base64"
-              )}`
-            : null,
+          photoUrls: home.photos
+            ? home.photos.map(
+                (filename) => `http://localhost:3000/uploads/${filename}`
+              )
+            : [],
         };
       });
       res.json(homesWithPhotoUrl);
@@ -117,6 +133,16 @@ exports.editHomeApi = (req, res, next) => {
         return res.status(404).json({ error: "Home not found" });
       }
 
+      // Delete old photos
+      if (home.photos && home.photos.length > 0) {
+        home.photos.forEach((filename) => {
+          const filePath = path.join(__dirname, "../uploads", filename);
+          fs.unlink(filePath, (err) => {
+            if (err) console.error("Error deleting old photo:", err);
+          });
+        });
+      }
+
       home.houseName = houseName;
       home.price = price;
       home.location = location;
@@ -124,8 +150,9 @@ exports.editHomeApi = (req, res, next) => {
       home.description = description;
 
       if (req.files.photo) {
-        home.photo = req.files.photo[0].buffer;
-        home.photoMimeType = req.files.photo[0].mimetype;
+        home.photos = req.files.photo.map((file) => file.filename);
+      } else {
+        home.photos = [];
       }
 
       if (req.files.rulesFile) {
@@ -147,8 +174,9 @@ exports.editHomeApi = (req, res, next) => {
 exports.postAddHomeApi = (req, res, next) => {
   const { houseName, price, location, rating, description } = req.body;
 
-  const photo = req.files.photo ? req.files.photo[0].buffer : null;
-  const photoMimeType = req.files.photo ? req.files.photo[0].mimetype : null;
+  const photos = req.files.photo
+    ? req.files.photo.map((file) => file.filename)
+    : [];
   const houseRulePdf = req.files.rulesFile
     ? req.files.rulesFile[0].buffer
     : null;
@@ -161,8 +189,7 @@ exports.postAddHomeApi = (req, res, next) => {
     price,
     location,
     rating,
-    photo,
-    photoMimeType,
+    photos,
     houseRulePdf,
     houseRulePdfMimeType,
     description,

@@ -17,8 +17,11 @@ const homeSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-  photo: Buffer,
-  photoMimeType: String,
+  photos: [
+    {
+      type: String, // store filename
+    },
+  ],
   houseRulePdf: Buffer,
   houseRulePdfMimeType: String,
   description: String,
