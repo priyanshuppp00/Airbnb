@@ -7,14 +7,18 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     location: "",
     rating: "",
     description: "",
-    photos: [],
+    photos: [], // store File objects for new uploads
+    existingPhotos: [], // store URLs or filenames of existing photos
     rulesFile: null,
+    existingRulesFile: null, // for existing PDF in edit mode
   });
 
   const fileInputRef = useRef(null);
   const rulesFileRef = useRef(null);
-  const [preview, setPreview] = useState(null);
 
+  const [preview, setPreview] = useState([]); // for new uploaded images
+
+  // Initialize form in edit mode
   useEffect(() => {
     if (editing && homeData) {
       setForm({
@@ -23,20 +27,30 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
         location: homeData.location || "",
         rating: homeData.rating || "",
         description: homeData.description || "",
-        photo: null,
+        photos: [],
+        existingPhotos: homeData.photos ? [homeData.photos] : [], // assuming single photo, modify if multiple
         rulesFile: null,
+        existingRulesFile: homeData.rulesFile || null,
       });
+      if (homeData.photos) setPreview([homeData.photosUrl || homeData.photos]);
     }
   }, [editing, homeData]);
 
+  // Handle input change
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (files && files.length > 0) {
       if (name === "photos") {
         const selectedFiles = Array.from(files);
-        setForm((prev) => ({ ...prev, photos: selectedFiles }));
-        setPreview(selectedFiles.map((file) => URL.createObjectURL(file)));
+        setForm((prev) => ({
+          ...prev,
+          photos: [...prev.photos, ...selectedFiles],
+        }));
+        setPreview((prev) => [
+          ...prev,
+          ...selectedFiles.map((file) => URL.createObjectURL(file)),
+        ]);
       }
 
       if (name === "rulesFile") {
@@ -53,14 +67,45 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     }
   };
 
+  // Remove uploaded photo (new)
+  const removePhoto = (index) => {
+    setForm((prev) => {
+      const newPhotos = [...prev.photos];
+      newPhotos.splice(index - prev.existingPhotos.length, 1); // adjust for existing photos
+      return { ...prev, photos: newPhotos };
+    });
+
+    setPreview((prev) => {
+      const newPreview = [...prev];
+      newPreview.splice(index, 1);
+      return newPreview;
+    });
+  };
+
+  // Remove existing photo
+  const removeExistingPhoto = (index) => {
+    setForm((prev) => {
+      const newExisting = [...prev.existingPhotos];
+      newExisting.splice(index, 1);
+      return { ...prev, existingPhotos: newExisting };
+    });
+
+    setPreview((prev) => {
+      const newPreview = [...prev];
+      newPreview.splice(index, 1);
+      return newPreview;
+    });
+  };
+
+  // Remove rules PDF
   const removeRulesFile = () => {
-    setForm((prev) => ({ ...prev, rulesFile: null }));
+    setForm((prev) => ({ ...prev, rulesFile: null, existingRulesFile: null }));
     if (rulesFileRef.current) rulesFileRef.current.value = "";
   };
 
+  // Submit handler
   const handleSubmit = (e) => {
     e.preventDefault();
-
     const fd = new FormData();
     fd.append("houseName", form.houseName);
     fd.append("price", form.price);
@@ -68,8 +113,22 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
     fd.append("rating", form.rating);
     fd.append("description", form.description);
 
-    form.photos.forEach((photo) => fd.append("photo", photo));
+    // Append new photos
+    form.photos?.forEach((photo) => fd.append("photo", photo));
+
+    // Append existing photos if editing
+    if (editing && form.existingPhotos?.length > 0) {
+      form.existingPhotos.forEach((photo) =>
+        fd.append("existingPhotos", photo)
+      );
+    }
+
+    // Append rules PDF
     if (form.rulesFile) fd.append("rulesFile", form.rulesFile);
+
+    if (editing && form.existingRulesFile) {
+      fd.append("existingRulesFile", form.existingRulesFile);
+    }
 
     onSubmit(fd);
   };
@@ -155,16 +214,11 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
                   <button
                     type="button"
                     onClick={() => {
-                      setForm((prev) => {
-                        const newPhotos = [...prev.photos];
-                        newPhotos.splice(index, 1);
-                        return { ...prev, photos: newPhotos };
-                      });
-                      setPreview((prev) => {
-                        const newPreview = [...prev];
-                        newPreview.splice(index, 1);
-                        return newPreview;
-                      });
+                      if (index < form.existingPhotos.length) {
+                        removeExistingPhoto(index);
+                      } else {
+                        removePhoto(index);
+                      }
                     }}
                     className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer"
                   >
@@ -189,9 +243,12 @@ const HomeForm = ({ editing = false, homeData = {}, onSubmit }) => {
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:outline-none"
           />
-          {form.rulesFile && (
+          {(form.rulesFile || form.existingRulesFile) && (
             <div className="mt-1 flex items-center justify-between bg-gray-100 p-2 rounded">
-              <span>{form.rulesFile.name}</span>
+              <span>
+                {(form.rulesFile || form.existingRulesFile)?.name ||
+                  "Existing PDF"}
+              </span>
               <button
                 type="button"
                 onClick={removeRulesFile}

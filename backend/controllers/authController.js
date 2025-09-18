@@ -1,21 +1,26 @@
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
-const { buildSafeUser } = require("../utils/safeUser");
 const fs = require("fs");
 const path = require("path");
+const { buildSafeUser } = require("../utils/safeUser");
+
+// Helper: base URL
+const getBaseUrl = (req) =>
+  process.env.NODE_ENV === "production"
+    ? `${req.protocol}://${req.get("host")}`
+    : process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
 
 // 🔹 Get current logged-in user
-exports.getCurrentUser = async (req, res, next) => {
+exports.getCurrentUser = async (req, res) => {
   try {
     if (req.session?.isLoggedIn && req.session.user) {
       const user = await User.findById(req.session.user._id);
       if (!user) return res.status(404).json({ error: "User not found" });
 
-      const safeUser = buildSafeUser(user);
+      const safeUser = buildSafeUser(user, req);
       return res.json({ user: safeUser });
-    } else {
-      return res.json({ user: null });
     }
+    return res.json({ user: null });
   } catch (err) {
     console.error("❌ getCurrentUser error:", err);
     return res.status(500).json({ error: "Failed to fetch user profile" });
@@ -25,16 +30,13 @@ exports.getCurrentUser = async (req, res, next) => {
 // 🔹 Update user profile
 exports.updateUserProfile = async (req, res) => {
   try {
-    if (!req.session?.user?._id) {
+    if (!req.session?.user?._id)
       return res.status(401).json({ error: "Not authenticated" });
-    }
 
     const user = await User.findById(req.session.user._id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // update fields
+    // Update fields
     [
       "firstName",
       "middleName",
@@ -46,30 +48,25 @@ exports.updateUserProfile = async (req, res) => {
       if (req.body[field] !== undefined) user[field] = req.body[field];
     });
 
-    // password
+    // Update password
     if (req.body.password) {
       user.password = await bcrypt.hash(req.body.password, 12);
     }
 
-    // profilePic upload
+    // Update profile picture
     if (req.file) {
-      // Delete old profile pic
-      if (user.profilePicFilename) {
-        const oldPath = path.join(
-          __dirname,
-          "../uploads",
-          user.profilePicFilename
-        );
+      if (user.profilePic) {
+        const oldPath = path.join(__dirname, "../uploads", user.profilePic);
         fs.unlink(oldPath, (err) => {
           if (err) console.error("Error deleting old profile pic:", err);
         });
       }
-      user.profilePicFilename = req.file.filename;
+      user.profilePic = req.file.filename;
     }
 
     await user.save();
 
-    const safeUser = buildSafeUser(user);
+    const safeUser = buildSafeUser(user, req);
 
     req.session.user = {
       _id: user._id.toString(),
@@ -94,8 +91,9 @@ exports.updateUserProfile = async (req, res) => {
       .json({ error: "Failed to update profile: " + err.message });
   }
 };
+
 // 🔹 Login
-exports.postLogin = async (req, res, next) => {
+exports.postLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -104,9 +102,8 @@ exports.postLogin = async (req, res, next) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(422).json({ errors: ["Invalid Password"] });
 
-    const safeUser = buildSafeUser(user);
+    const safeUser = buildSafeUser(user, req);
 
-    // Regenerate session for security
     req.session.regenerate((err) => {
       if (err)
         return res
@@ -142,7 +139,7 @@ exports.postLogin = async (req, res, next) => {
 };
 
 // 🔹 Logout
-exports.postLogout = (req, res, next) => {
+exports.postLogout = (req, res) => {
   req.session.destroy((err) => {
     if (err)
       return res
@@ -153,7 +150,7 @@ exports.postLogout = (req, res, next) => {
 };
 
 // 🔹 Signup
-exports.postSignup = async (req, res, next) => {
+exports.postSignup = async (req, res) => {
   try {
     const { firstName, middleName, lastName, email, password, userType, city } =
       req.body;
@@ -174,13 +171,11 @@ exports.postSignup = async (req, res, next) => {
       city,
     });
 
-    if (req.file) {
-      user.profilePicFilename = req.file.filename;
-    }
+    if (req.file) user.profilePic = req.file.filename;
 
     await user.save();
 
-    const safeUser = buildSafeUser(user);
+    const safeUser = buildSafeUser(user, req);
 
     req.session.isLoggedIn = true;
     req.session.user = {
@@ -207,18 +202,14 @@ exports.postSignup = async (req, res, next) => {
   }
 };
 
-// 🔹 Get profile picture
+// 🔹 Get profile picture (direct download)
 exports.getProfilePic = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
-    if (!user || !user.profilePicFilename) {
+    if (!user || !user.profilePic)
       return res.status(404).send("Profile picture not found");
-    }
-    const filePath = path.join(
-      __dirname,
-      "../uploads",
-      user.profilePicFilename
-    );
+
+    const filePath = path.join(__dirname, "../uploads", user.profilePic);
     res.sendFile(filePath);
   } catch (err) {
     console.error("❌ getProfilePic error:", err);
@@ -227,7 +218,7 @@ exports.getProfilePic = async (req, res) => {
 };
 
 // 🔹 Forget password / destroy session
-exports.forgetpassword = (req, res, next) => {
+exports.forgetpassword = (req, res) => {
   req.session.destroy(() => {
     res.json({ message: "Session destroyed" });
   });

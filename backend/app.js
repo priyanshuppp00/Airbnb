@@ -45,6 +45,17 @@ app.use(
   })
 );
 
+// Serve static files
+app.use(express.static(path.join(rootDir, "public")));
+app.use(
+  "/uploads",
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+  express.static(path.join(__dirname, "uploads"))
+);
+
 // Session middleware
 app.use(
   session({
@@ -61,19 +72,8 @@ app.use(
   })
 );
 
-app.use((req, res, next) => {
-  console.log("Cookies:", req.headers.cookie);
-  console.log("Session ID:", req.sessionID);
-  console.log("Session Data:", req.session);
-  next();
-});
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve static files
-app.use(express.static(path.join(rootDir, "public")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/store", storeRouter);

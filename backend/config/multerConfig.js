@@ -1,17 +1,18 @@
-// config/multerConfig.js
 const multer = require("multer");
-const path = require("path");
 const crypto = require("crypto");
+const path = require("path");
+
+const randomString = (length) => {
+  return crypto
+    .randomBytes(Math.ceil(length / 2))
+    .toString("hex")
+    .slice(0, length);
+};
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
-  },
-  filename: (req, file, cb) => {
-    const randomName =
-      crypto.randomBytes(8).toString("hex") + path.extname(file.originalname);
-    cb(null, randomName);
-  },
+  destination: (req, file, cb) => cb(null, path.join(__dirname, "../uploads")),
+  filename: (req, file, cb) =>
+    cb(null, `${randomString(10)}-${file.originalname}`),
 });
 
 const fileFilter = (req, file, cb) => {

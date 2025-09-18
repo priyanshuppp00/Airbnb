@@ -1,41 +1,53 @@
 const Home = require("../models/home");
+const User = require("../models/user");
 const fs = require("fs");
 const path = require("path");
-const User = require("../models/user");
+const { buildSafeHome } = require("../utils/safeHome");
 
-exports.postAddHome = (req, res, next) => {
+// Helper: base URL
+const getBaseUrl = (req) =>
+  process.env.NODE_ENV === "production"
+    ? `${req.protocol}://${req.get("host")}`
+    : process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
+
+// Delete file helper
+const deleteFile = (filename) => {
+  if (!filename) return;
+  const filePath = path.join(__dirname, "../uploads", filename);
+  fs.unlink(filePath, (err) => {
+    if (err) console.error("Error deleting file:", err);
+  });
+};
+
+// ---------------- POST Add Home ----------------
+exports.postAddHome = (req, res) => {
   const { houseName, price, location, rating, description } = req.body;
 
-  if (!req.file) {
-    return res.status(422).json({ error: "No image provided" });
-  }
-
-  const photo = req.file.buffer;
-  const photoMimeType = req.file.mimetype;
+  if (!req.file) return res.status(422).json({ error: "No image provided" });
 
   const home = new Home({
     houseName,
     price,
     location,
     rating,
-    photo,
-    photoMimeType,
+    photos: req.file.filename,
     description,
   });
+
   home
     .save()
-    .then(() => {
-      res.status(201).json({ message: "Home added successfully" });
-    })
-    .catch((err) => {
-      res.status(500).json({ error: "Failed to save home" });
-    });
+    .then(() => res.status(201).json({ message: "Home added successfully" }))
+    .catch(() => res.status(500).json({ error: "Failed to save home" }));
 };
 
-exports.postEditHome = (req, res, next) => {
+// ---------------- POST Edit Home ----------------
+exports.postEditHome = (req, res) => {
   const { id, houseName, price, location, rating, description } = req.body;
+
   Home.findById(id)
     .then((home) => {
+      if (!home) return res.status(404).json({ error: "Home not found" });
+
       home.houseName = houseName;
       home.price = price;
       home.location = location;
@@ -43,105 +55,54 @@ exports.postEditHome = (req, res, next) => {
       home.description = description;
 
       if (req.file) {
-        home.photo = req.file.buffer;
-        home.photoMimeType = req.file.mimetype;
+        deleteFile(home.photos);
+        home.photos = req.file.filename;
       }
 
-      home
-        .save()
-        .then((result) => {
-          res.status(200).json({ message: "Home updated successfully" });
-        })
-        .catch((err) => {
-          res.status(500).json({ error: "Failed to update home" });
-        });
+      return home.save();
     })
-    .catch((err) => {
-      res.status(500).json({ error: "Failed to find home" });
-    });
+    .then(() => res.status(200).json({ message: "Home updated successfully" }))
+    .catch(() => res.status(500).json({ error: "Failed to update home" }));
 };
 
-exports.postDeleteHome = (req, res, next) => {
+// ---------------- POST Delete Home ----------------
+exports.postDeleteHome = (req, res) => {
   const homeId = req.params.homeId;
 
   Home.findById(homeId)
     .then((home) => {
-      if (!home) {
-        return res.status(404).json({ error: "Home not found" });
-      }
+      if (!home) return res.status(404).json({ error: "Home not found" });
 
-      // Delete photos
-      if (home.photos && home.photos.length > 0) {
-        home.photos.forEach((filename) => {
-          const filePath = path.join(__dirname, "../uploads", filename);
-          fs.unlink(filePath, (err) => {
-            if (err) console.error("Error deleting photo:", err);
-          });
-        });
-      }
+      deleteFile(home.photos);
+      deleteFile(home.houseRulePdf);
 
       return Home.findByIdAndDelete(homeId);
     })
-    .then(() => {
-      // Remove the homeId from all users' bookings and favourites arrays
-      return User.updateMany(
-        {},
-        { $pull: { bookings: homeId, favourites: homeId } }
-      );
-    })
-    .then(() => {
-      res.status(200).json({ message: "Home deleted successfully" });
-    })
-    .catch((error) => {
-      res.status(500).json({ error: "Failed to delete home" });
-    });
+    .then(() =>
+      User.updateMany({}, { $pull: { bookings: homeId, favourites: homeId } })
+    )
+    .then(() => res.status(200).json({ message: "Home deleted successfully" }))
+    .catch(() => res.status(500).json({ error: "Failed to delete home" }));
 };
 
-// API method to get homes as JSON
-exports.getHomesApi = (req, res, next) => {
+// ---------------- GET Homes API ----------------
+exports.getHomesApi = (req, res) => {
   Home.find()
     .then((homes) => {
-      const homesWithPhotoUrl = homes.map((home) => {
-        return {
-          _id: home._id,
-          houseName: home.houseName,
-          price: home.price,
-          location: home.location,
-          rating: home.rating,
-          description: home.description,
-          photoUrls: home.photos
-            ? home.photos.map(
-                (filename) => `http://localhost:3000/uploads/${filename}`
-              )
-            : [],
-        };
-      });
-      res.json(homesWithPhotoUrl);
+      const safeHomes = homes.map((home) => buildSafeHome(home, req));
+      res.json(safeHomes);
     })
-    .catch((err) => {
-      res.status(500).json({ error: "Failed to fetch homes" });
-    });
+    .catch(() => res.status(500).json({ error: "Failed to fetch homes" }));
 };
 
-exports.editHomeApi = (req, res, next) => {
+// ---------------- PUT Edit Home API ----------------
+exports.editHomeApi = (req, res) => {
   const homeId = req.params.homeId;
   const { houseName, price, location, rating, description } = req.body;
 
   Home.findById(homeId)
     .then((home) => {
-      if (!home) {
-        return res.status(404).json({ error: "Home not found" });
-      }
-
-      // Delete old photos
-      if (home.photos && home.photos.length > 0) {
-        home.photos.forEach((filename) => {
-          const filePath = path.join(__dirname, "../uploads", filename);
-          fs.unlink(filePath, (err) => {
-            if (err) console.error("Error deleting old photo:", err);
-          });
-        });
-      }
+      if (!home) return res.status(404).json({ error: "Home not found" });
 
       home.houseName = houseName;
       home.price = price;
@@ -149,39 +110,29 @@ exports.editHomeApi = (req, res, next) => {
       home.rating = rating;
       home.description = description;
 
-      if (req.files.photo) {
-        home.photos = req.files.photo.map((file) => file.filename);
-      } else {
-        home.photos = [];
+      if (req.files?.photo) {
+        deleteFile(home.photos);
+        home.photos = req.files.photo[0].filename;
       }
 
-      if (req.files.rulesFile) {
-        home.houseRulePdf = req.files.rulesFile[0].buffer;
-        home.houseRulePdfMimeType = req.files.rulesFile[0].mimetype;
+      if (req.files?.rulesFile) {
+        deleteFile(home.houseRulePdf);
+        home.houseRulePdf = req.files.rulesFile[0].filename;
       }
 
       return home.save();
     })
-    .then(() => {
-      res.status(200).json({ message: "Home updated successfully" });
-    })
-    .catch((err) => {
-      res.status(500).json({ error: "Failed to update home" });
-    });
+    .then(() => res.status(200).json({ message: "Home updated successfully" }))
+    .catch(() => res.status(500).json({ error: "Failed to update home" }));
 };
 
-// API method to add home via JSON
-exports.postAddHomeApi = (req, res, next) => {
+// ---------------- POST Add Home API ----------------
+exports.postAddHomeApi = (req, res) => {
   const { houseName, price, location, rating, description } = req.body;
 
-  const photos = req.files.photo
-    ? req.files.photo.map((file) => file.filename)
-    : [];
-  const houseRulePdf = req.files.rulesFile
-    ? req.files.rulesFile[0].buffer
-    : null;
-  const houseRulePdfMimeType = req.files.rulesFile
-    ? req.files.rulesFile[0].mimetype
+  const photos = req.files?.photo ? req.files.photo[0].filename : null;
+  const houseRulePdf = req.files?.rulesFile
+    ? req.files.rulesFile[0].filename
     : null;
 
   const home = new Home({
@@ -191,16 +142,11 @@ exports.postAddHomeApi = (req, res, next) => {
     rating,
     photos,
     houseRulePdf,
-    houseRulePdfMimeType,
     description,
   });
 
   home
     .save()
-    .then(() => {
-      res.status(201).json({ message: "Home added successfully" });
-    })
-    .catch((err) => {
-      res.status(500).json({ error: "Failed to add home" });
-    });
+    .then(() => res.status(201).json({ message: "Home added successfully" }))
+    .catch(() => res.status(500).json({ error: "Failed to add home" }));
 };

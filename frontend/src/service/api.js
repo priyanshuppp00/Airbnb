@@ -1,15 +1,22 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
-  ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "")
-  : "";
+// Remove trailing slash from env URL
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
+
+// If not provided, fallback smartly
+const baseURL =
+  API_BASE_URL ||
+  (import.meta.env.MODE === "development"
+    ? "http://localhost:3000"
+    : window.location.origin);
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
+  baseURL,
+  withCredentials: true, // allow cookies/sessions
 });
 
-// Store API functions
+// -------------------- Store API -------------------- //
 export const storeAPI = {
   getHomes: (page = 1, limit = 10) =>
     apiClient.get(`/api/store/?page=${page}&limit=${limit}`),
@@ -28,7 +35,7 @@ export const storeAPI = {
     apiClient.delete(`/api/store/favourites/${homeId}`),
 };
 
-// Auth API functions
+// -------------------- Auth API -------------------- //
 export const authAPI = {
   checkSession: () => apiClient.get("/api/auth/current-user"),
   getCurrentUser: () => apiClient.get("/api/auth/current-user"),
@@ -47,30 +54,22 @@ export const authAPI = {
       }
     }
     return apiClient.put("/api/auth/profile", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+      headers: { "Content-Type": "multipart/form-data" },
     });
   },
 };
 
-// Host API functions
+// -------------------- Host API -------------------- //
 export const hostAPI = {
   getHostHomes: () => apiClient.get("/api/host/homes"),
-  addHome: (homeData) => {
-    return apiClient.post("/api/host/homes", homeData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  },
-  editHome: (homeId, homeData) => {
-    return apiClient.put(`/api/host/homes/${homeId}`, homeData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-  },
+  addHome: (homeData) =>
+    apiClient.post("/api/host/homes", homeData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  editHome: (homeId, homeData) =>
+    apiClient.put(`/api/host/homes/${homeId}`, homeData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
   deleteHome: (homeId) => apiClient.delete(`/api/host/homes/${homeId}`),
   getBookingRequests: () => apiClient.get("/api/host/booking-requests"),
 };

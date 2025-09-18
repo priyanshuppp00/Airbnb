@@ -17,20 +17,9 @@ const homeSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-  photos: [
-    {
-      type: String, // store filename
-    },
-  ],
-  houseRulePdf: Buffer,
-  houseRulePdfMimeType: String,
+  photos: String,
+  houseRulePdf: String,
   description: String,
 });
-
-// homeSchema.pre('findOneAndDelete', async function(next) {
-//   const homeId = this.getQuery()._id;
-//   await favourite.deleteMany({houseId: homeId});
-//   next();
-// });
 
 module.exports = mongoose.model("Home", homeSchema);

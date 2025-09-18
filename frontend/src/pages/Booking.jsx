@@ -97,7 +97,7 @@ const Booking = () => {
                 <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden rounded-t-2xl">
                   <img
                     loading="lazy"
-                    src={home.photoUrl || "https://via.placeholder.com/400x250"}
+                    src={home.photos || "https://via.placeholder.com/400x250"}
                     alt={home.houseName}
                     onError={(e) =>
                       (e.target.src = "https://via.placeholder.com/400x250")

@@ -10,7 +10,8 @@ const HostHomes = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchHomes = () => {
+    setLoading(true);
     storeAPI
       .getHomes()
       .then((res) => {
@@ -19,11 +20,19 @@ const HostHomes = () => {
         } else if (res.data && Array.isArray(res.data.homes)) {
           setHomes(res.data.homes);
         } else {
+          setHomes([]);
           setError("Invalid data received.");
         }
       })
-      .catch(() => setError("Failed to fetch homes."))
+      .catch(() => {
+        setHomes([]);
+        setError("Failed to fetch homes.");
+      })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchHomes();
   }, []);
 
   const handleEdit = (homeId) => {
@@ -36,20 +45,7 @@ const HostHomes = () => {
         .deleteHome(homeId)
         .then(() => {
           toast.success("Home deleted successfully!");
-          // Refetch homes to ensure UI is in sync with backend
-          storeAPI
-            .getHomes()
-            .then((res) => {
-              if (Array.isArray(res.data)) {
-                setHomes(res.data);
-              } else {
-                alert("Failed to refresh homes after delete.");
-              }
-            })
-            .catch((error) => {
-              console.error("Failed to refetch homes:", error);
-              alert("Failed to refresh homes after delete.");
-            });
+          fetchHomes(); // refresh homes
         })
         .catch((error) => {
           console.error("Delete failed:", error);
@@ -96,7 +92,7 @@ const HostHomes = () => {
                 <div className="relative w-full h-48 sm:h-56 md:h-64 overflow-hidden rounded-t-2xl">
                   <img
                     loading="lazy"
-                    src={home.photoUrl || "https://via.placeholder.com/400x250"}
+                    src={home.photos || "https://via.placeholder.com/400x250"}
                     alt={home.houseName}
                     onError={(e) =>
                       (e.target.src = "https://via.placeholder.com/400x250")
@@ -126,11 +122,11 @@ const HostHomes = () => {
                       {[...Array(5)].map((_, i) => (
                         <span
                           key={i}
-                          className={`${
+                          className={
                             i < Math.round(home.rating || 0)
                               ? "text-yellow-400"
                               : "text-gray-300"
-                          }`}
+                          }
                         >
                           ★
                         </span>
@@ -142,7 +138,6 @@ const HostHomes = () => {
                     {home.description}
                   </p>
 
-                  {/* Host management buttons */}
                   <div className="flex gap-2 mt-2">
                     <button
                       onClick={() => handleEdit(home._id)}
@@ -167,4 +162,5 @@ const HostHomes = () => {
     </>
   );
 };
+
 export default HostHomes;
