@@ -152,12 +152,17 @@ exports.postLogout = (req, res) => {
 // 🔹 Signup
 exports.postSignup = async (req, res) => {
   try {
+    console.log("Signup request body:", req.body);
+    console.log("Signup request file:", req.file);
+
     const { firstName, middleName, lastName, email, password, userType, city } =
       req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser)
+    if (existingUser) {
+      console.log("Email already registered:", email);
       return res.status(400).json({ error: "Email already registered" });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -171,7 +176,10 @@ exports.postSignup = async (req, res) => {
       city,
     });
 
-    if (req.file) user.profilePic = req.file.filename;
+    if (req.file) {
+      console.log("Profile pic uploaded:", req.file.filename);
+      user.profilePic = req.file.filename;
+    }
 
     await user.save();
 
@@ -187,11 +195,14 @@ exports.postSignup = async (req, res) => {
     };
 
     req.session.save((err) => {
-      if (err)
+      if (err) {
+        console.error("Session save error:", err);
         return res
           .status(500)
           .json({ error: "Signup successful, but session not saved" });
+      }
 
+      console.log("Signup successful for user:", email);
       return res
         .status(201)
         .json({ message: "Signup successful", user: safeUser });

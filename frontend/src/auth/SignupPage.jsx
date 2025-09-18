@@ -103,8 +103,11 @@ const SignupPage = () => {
       toast.success("Signup successful! redirecting for login...");
       navigate("/"); // Redirect to home/dashboard after signup
     } catch (err) {
-      const apiErrors = err.response?.data?.errors || [];
-      toast.error(apiErrors.length ? apiErrors.join(", ") : "Signup failed");
+      const apiError =
+        err.response?.data?.error ||
+        err.response?.data?.errors?.join(", ") ||
+        "Signup failed";
+      toast.error(apiError);
     } finally {
       setLoading(false);
     }

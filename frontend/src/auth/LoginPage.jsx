@@ -36,8 +36,35 @@ const LoginPage = () => {
     } catch (err) {
       const errors = err.response?.data?.errors || [];
       if (errors.includes("User does not exist")) {
-        toast.error("User does not exist. Please sign up first.");
-        setTimeout(() => navigate("/signup"), 1200);
+        toast.error(
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <span className="text-sm font-medium text-center sm:text-left">
+              User does not exist.
+            </span>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => {
+                  toast.dismiss();
+                  navigate("/signup");
+                }}
+                className="px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-md shadow-sm 
+                   hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 
+                   transition text-center"
+              >
+                Register
+              </button>
+              <button
+                onClick={() => toast.dismiss()}
+                className="px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-md shadow-sm 
+                   hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 
+                   transition text-center"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>,
+          { autoClose: false } // 🔥 stays open until user clicks
+        );
       } else if (errors.includes("Invalid Password")) {
         toast.error("Invalid password. Please try again.");
       } else {
