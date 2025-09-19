@@ -4,10 +4,12 @@ function buildSafeUser(user) {
   return {
     _id: user._id,
     firstName: user.firstName,
+    middleName: user.middleName,
     lastName: user.lastName,
     email: user.email,
-    profilePic: user.profilePic,
+    profilePic: user.profilePic ? `/uploads/${user.profilePic}` : null,
     userType: user.userType,
+    city: user.city,
   };
 }
 

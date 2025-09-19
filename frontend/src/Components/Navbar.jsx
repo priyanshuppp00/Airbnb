@@ -50,7 +50,7 @@ const Navbar = () => {
     navigate("/");
   };
 
-  const avatarSrc = user?.profilePic
+  const profilePicUrl = user?.profilePic
     ? user.profilePic
     : user
     ? `https://ui-avatars.com/api/?name=${user.firstName || "User"}+${
@@ -119,7 +119,7 @@ const Navbar = () => {
             >
               {dropdownOpen ? <X /> : <Menu />}
               <img
-                src={avatarSrc}
+                src={profilePicUrl}
                 alt="Profile"
                 className="w-6 h-6 rounded-full object-cover"
               />
@@ -151,7 +151,7 @@ const Navbar = () => {
                   <li role="none">
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left block px-4 py-2 text-lg hover:bg-opacity-20"
+                      className="w-full text-left block px-4 py-2 text-lg hover:bg-opacity-20 cursor-pointer"
                       role="menuitem"
                     >
                       Logout

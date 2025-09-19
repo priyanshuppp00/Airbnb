@@ -4,12 +4,6 @@ const fs = require("fs");
 const path = require("path");
 const { buildSafeHome } = require("../utils/safeHome");
 
-// Helper: base URL
-const getBaseUrl = (req) =>
-  process.env.NODE_ENV === "production"
-    ? `${req.protocol}://${req.get("host")}`
-    : process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 3000}`;
-
 // Delete file helper
 const deleteFile = (filename) => {
   if (!filename) return;

@@ -76,6 +76,7 @@ exports.updateUserProfile = async (req, res) => {
       email: user.email,
       userType: user.userType,
       city: user.city,
+      profilePic: user.profilePic,
     };
 
     req.session.save((err) => {
@@ -119,6 +120,7 @@ exports.postLogin = async (req, res) => {
         email: user.email,
         userType: user.userType,
         city: user.city,
+        profilePic: user.profilePic,
       };
 
       req.session.save((err) => {
@@ -189,9 +191,12 @@ exports.postSignup = async (req, res) => {
     req.session.user = {
       _id: user._id.toString(),
       firstName: user.firstName,
+      middleName: user.middleName,
       lastName: user.lastName,
       email: user.email,
       userType: user.userType,
+      city: user.city,
+      profilePic: user.profilePic,
     };
 
     req.session.save((err) => {

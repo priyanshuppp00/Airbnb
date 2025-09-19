@@ -7,7 +7,7 @@ import _ from "lodash"; // ✅ Import lodash
 import Spinner from "../Components/Spinner";
 
 const Profile = () => {
-  const { user, loading, fetchUser } = useContext(UserContext);
+  const { user, loading, fetchUser, login } = useContext(UserContext);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -44,7 +44,12 @@ const Profile = () => {
       const response = await authAPI.updateProfile(formData);
       setMessage(response.data.message);
       setEditMode(false);
-      await fetchUser();
+      // Use the returned updated user to update context
+      if (response.data.user) {
+        login(response.data.user);
+      } else {
+        await fetchUser();
+      }
       // Keep the message visible for 3 seconds after update
       setTimeout(() => setMessage(""), 3000);
     } catch {
@@ -58,13 +63,23 @@ const Profile = () => {
   if (!user) return <div>Please log in to view your profile.</div>;
 
   // Fallback for profilePic and initials
-  const profilePicUrl = user.profilePicFilename
-    ? `${import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"}/uploads/${
-        user.profilePicFilename
-      }`
-    : `https://ui-avatars.com/api/?name=${
-        user.firstName || user.lastName || user.email.split("@")[0]
-      }&background=E5E7EB&color=111827`;
+  // const profilePicUrl = user.profilePic
+  //   ? `${
+  //       import.meta.env.VITE_BACKEND_URL || "http://localhost:8080"
+  //     }/api/auth/profile-pic/${user._id}?t=${Date.now()}`
+  //   : `https://ui-avatars.com/api/?name=${
+  //       user.firstName || user.lastName || user.email.split("@")[0]
+  //   }&background=E5E7EB&color=111827`;
+
+  const profilePicUrl = user?.profilePic
+    ? user.profilePic
+    : user
+    ? `https://ui-avatars.com/api/?name=${user.firstName || "User"}+${
+        user.lastName || ""
+      }&background=E5E7EB&color=111827`
+    : `https://api.dicebear.com/7.x/bottts/svg?seed=random${Math.floor(
+        Math.random() * 10000
+      )}`;
 
   return (
     <div className="pt-20 flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
