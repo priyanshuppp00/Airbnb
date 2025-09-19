@@ -1,14 +1,12 @@
 // app.js
+require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const path = require("path");
-const dotenv = require("dotenv");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-
-// Load env vars
-dotenv.config();
+const cors = require("cors");
 
 // Local Modules
 const connectDB = require("./config/db");
@@ -18,71 +16,88 @@ const hostRouter = require("./routes/hostRouter");
 const authRouter = require("./routes/authRouter");
 const errorsController = require("./controllers/errors");
 const errorHandler = require("./middleware/errorHandler");
-const sessionStore = require("./config/sessionStore");
 
 const PORT = process.env.PORT || 3000;
-const cors = require("cors");
 
 const app = express();
 
-// Security middleware
+// trust proxy when behind a load balancer (Render, Vercel etc.)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+// Basic security headers but allow cross-origin resources (images)
 app.use(
   helmet({
-    crossOriginResourcePolicy: false, // Allow cross-origin resource sharing for images
+    // make sure COEP / CORP don't block images; we set Cross-Origin-Resource-Policy later for uploads
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use(limiter);
+// Rate limiter (optional)
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests, try later.",
+  })
+);
 
-connectDB();
+// CORS: allow exactly the frontend origin(s)
+const FRONTENDS = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((s) => s.trim());
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // e.g. https://airbnb.vercel.app
+    origin: function (origin, callback) {
+      // allow requests from tools (postman/curl) with no origin
+      if (!origin) return callback(null, true);
+      if (FRONTENDS.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
 
-// Serve static files
-app.use(express.static(path.join(rootDir, "public")));
-app.use(
-  "/uploads",
-  cors({
-    origin: process.env.FRONTEND_URL || "*",
-    credentials: true,
-  }),
-  express.static(path.join(__dirname, "uploads"), {
-    setHeaders: (res, path) => {
-      res.set("Cross-Origin-Resource-Policy", "cross-origin");
-      res.set("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
-    },
-  })
-);
-
-// Session middleware
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "your-secret-key",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // ✅ true on deploy, false in dev
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    },
-  })
-);
-
+// Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve public + uploads with correct headers for cross-origin images
+app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders(res, filePath) {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      // don't set Access-Control-Allow-Origin '*' when credentials are required.
+      // We rely on the global CORS middleware to send the correct header.
+    },
+  })
+);
+
+// Sessions (production-safe)
+app.use(
+  session({
+    name: process.env.SESSION_NAME || "sid",
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+    }),
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // true on HTTPS
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+  })
+);
+
+connectDB();
 
 // Routes
 app.use("/api/store", storeRouter);
