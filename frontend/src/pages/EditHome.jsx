@@ -34,6 +34,10 @@ const EditHome = () => {
     try {
       await hostAPI.editHome(homeId, formData); // FormData with photo and/or PDF
       toast.success("Home updated successfully!");
+      // Trigger global refresh of homes after editing
+      if (typeof window !== "undefined" && window.dispatchEvent) {
+        window.dispatchEvent(new Event("homesUpdated"));
+      }
       navigate("/host-homes");
     } catch (err) {
       // Show backend error if exists

@@ -126,11 +126,7 @@ const SignupPage = () => {
           timeoutMessage="Registration is taking longer than usual. Please wait."
         />
       )}
-      <div
-        className={`w-full max-w-md bg-white p-6 rounded-lg shadow-lg ${
-          loading ? "filter blur-sm" : ""
-        }`}
-      >
+      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
         <h2 className="mb-6 text-3xl font-bold text-center">Sign Up</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -91,11 +91,7 @@ const LoginPage = () => {
           timeoutMessage="Login is taking longer than usual. Please wait."
         />
       )}
-      <div
-        className={`w-full max-w-md bg-white p-6 rounded-lg shadow-lg ${
-          loading ? "filter blur-sm" : ""
-        }`}
-      >
+      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
         <h1 className="mb-6 text-3xl font-bold text-center text-gray-800">
           Login
         </h1>
