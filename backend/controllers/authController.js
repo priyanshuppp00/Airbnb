@@ -13,6 +13,12 @@ const getBaseUrl = (req) =>
 // 🔹 Get current logged-in user
 exports.getCurrentUser = async (req, res) => {
   try {
+    console.log("getCurrentUser - session ID:", req.sessionID);
+    console.log("getCurrentUser - isLoggedIn:", req.session?.isLoggedIn);
+    console.log(
+      "getCurrentUser - user:",
+      req.session?.user ? "exists" : "null"
+    );
     if (req.session?.isLoggedIn && req.session.user) {
       const user = await User.findById(req.session.user._id);
       if (!user) return res.status(404).json({ error: "User not found" });
@@ -124,11 +130,16 @@ exports.postLogin = async (req, res) => {
       };
 
       req.session.save((err) => {
-        if (err)
+        if (err) {
+          console.error("Login session save error:", err);
           return res
             .status(500)
             .json({ errors: ["Login failed, session not saved"] });
-
+        }
+        console.log(
+          "Login session saved successfully, session ID:",
+          req.sessionID
+        );
         return res
           .status(200)
           .json({ message: "Login successful", user: safeUser });

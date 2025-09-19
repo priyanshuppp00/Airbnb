@@ -4,12 +4,14 @@ import axios from "axios";
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
 
-// If not provided, fallback smartly
+// If not provided, fallback to localhost for dev, but require for prod
 const baseURL =
   API_BASE_URL ||
   (import.meta.env.MODE === "development"
     ? "http://localhost:3000"
-    : window.location.origin);
+    : (() => {
+        throw new Error("VITE_API_BASE_URL must be set in production");
+      })());
 
 axios.defaults.withCredentials = true; // Ensure credentials for all requests
 

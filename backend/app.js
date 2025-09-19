@@ -21,6 +21,12 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
+// Temporary logging for diagnosis
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
+console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
+console.log("SESSION_SECRET exists:", !!process.env.SESSION_SECRET);
+
 // trust proxy when behind a load balancer (Render, Vercel etc.)
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
@@ -59,6 +65,13 @@ app.use(
     credentials: true,
   })
 );
+
+// Temporary middleware to log proxy headers
+app.use((req, res, next) => {
+  console.log("x-forwarded-proto:", req.headers["x-forwarded-proto"]);
+  console.log("x-forwarded-for:", req.headers["x-forwarded-for"]);
+  next();
+});
 
 // Body parsing
 app.use(express.json());
