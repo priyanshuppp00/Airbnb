@@ -9,6 +9,8 @@ export const AppProvider = ({ children }) => {
   const [favourites, setFavourites] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [bookingLoadingIds, setBookingLoadingIds] = useState([]);
+  const [favouriteLoadingIds, setFavouriteLoadingIds] = useState([]);
 
   // ----------------------------
   // THEME HANDLING
@@ -55,19 +57,28 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const addBooking = async (homeId) => {
+  const addBooking = async (homeId, updateUserBookings) => {
+    setBookingLoadingIds((prev) => [...prev, homeId]);
     try {
       const res = await storeAPI.addToBooking(homeId);
       setBookings((prev) => [...prev, res.data]);
+      if (updateUserBookings) {
+        updateUserBookings((prev) => [...prev, homeId]);
+      }
     } catch (err) {
       console.error("Failed to add booking", err);
+    } finally {
+      setBookingLoadingIds((prev) => prev.filter((id) => id !== homeId));
     }
   };
 
-  const removeBooking = async (homeId) => {
+  const removeBooking = async (homeId, updateUserBookings) => {
     try {
       await storeAPI.removeFromBooking(homeId);
       setBookings((prev) => prev.filter((b) => b._id !== homeId));
+      if (updateUserBookings) {
+        updateUserBookings((prev) => prev.filter((id) => id !== homeId));
+      }
     } catch (err) {
       console.error("Failed to remove booking", err);
     }
@@ -85,19 +96,28 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const addFavourite = async (homeId) => {
+  const addFavourite = async (homeId, updateUserFavourites) => {
+    setFavouriteLoadingIds((prev) => [...prev, homeId]);
     try {
       const res = await storeAPI.addToFavourite(homeId);
       setFavourites((prev) => [...prev, res.data]);
+      if (updateUserFavourites) {
+        updateUserFavourites((prev) => [...prev, homeId]);
+      }
     } catch (err) {
       console.error("Failed to add favourite", err);
+    } finally {
+      setFavouriteLoadingIds((prev) => prev.filter((id) => id !== homeId));
     }
   };
 
-  const removeFavourite = async (homeId) => {
+  const removeFavourite = async (homeId, updateUserFavourites) => {
     try {
       await storeAPI.removeFromFavourite(homeId);
       setFavourites((prev) => prev.filter((f) => f._id !== homeId));
+      if (updateUserFavourites) {
+        updateUserFavourites((prev) => prev.filter((id) => id !== homeId));
+      }
     } catch (err) {
       console.error("Failed to remove favourite", err);
     }
@@ -138,6 +158,8 @@ export const AppProvider = ({ children }) => {
         removeFavourite,
         refreshBookings,
         refreshFavourites,
+        bookingLoadingIds,
+        favouriteLoadingIds,
         isDarkMode,
         toggleTheme,
         showPassword,

@@ -3,56 +3,39 @@ import { AppContext } from "../context/AppContext";
 import { UserContext } from "../context/UserContext";
 import LoginPopup from "../auth/LoginPopup";
 import Spinner from "../Components/Spinner";
-import { storeAPI } from "../service/api";
 import toast, { Toaster } from "react-hot-toast";
 
 const Booking = () => {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [removingId, setRemovingId] = useState(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const { refreshBookings } = useContext(AppContext);
-  const { user, loading: userLoading } = useContext(UserContext);
-
-  // Fetch bookings from API
-  const fetchBookings = () => {
-    setLoading(true);
-    storeAPI
-      .getBookings()
-      .then((res) => {
-        if (Array.isArray(res.data)) setBookings(res.data);
-        else setError("Invalid data received.");
-      })
-      .catch(() => setError("Failed to fetch bookings."))
-      .finally(() => setLoading(false));
-  };
+  const { bookings, removeBooking } = useContext(AppContext);
+  const {
+    user,
+    loading: userLoading,
+    setUserBookings,
+  } = useContext(UserContext);
 
   useEffect(() => {
-    fetchBookings();
+    setLoading(false);
   }, []);
 
-  // Real-time update when bookings are refreshed elsewhere
-  useEffect(() => {
-    if (refreshBookings) fetchBookings();
-  }, [refreshBookings]);
-
-  const handleRemoveBooking = (homeId) => {
+  const handleRemoveBooking = async (homeId) => {
     if (!user) {
       setShowLoginPopup(true);
       return;
     }
     setRemovingId(homeId);
 
-    storeAPI
-      .removeFromBooking(homeId)
-      .then(() => {
-        toast.success("Booking removed successfully!");
-        fetchBookings();
-      })
-      .catch(() => toast.error("Failed to remove booking."))
-      .finally(() => setRemovingId(null));
+    try {
+      await removeBooking(homeId, setUserBookings);
+      toast.success("Booking removed successfully!");
+    } catch {
+      toast.error("Failed to remove booking.");
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   if (loading || userLoading)
@@ -62,14 +45,6 @@ const Booking = () => {
         timeoutMessage="Loading bookings is taking longer than usual. Please wait."
       />
     );
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p className="text-xl font-semibold text-red-500">{error}</p>
-      </div>
-    );
-  }
 
   return (
     <>

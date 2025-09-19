@@ -32,6 +32,10 @@ const LoginPage = () => {
       login(res.data.user);
 
       toast.success("Login successful!");
+      // Trigger global refresh of user data after login
+      if (typeof window !== "undefined" && window.dispatchEvent) {
+        window.dispatchEvent(new Event("userLoggedIn"));
+      }
       navigate("/");
     } catch (err) {
       const errors = err.response?.data?.errors || [];

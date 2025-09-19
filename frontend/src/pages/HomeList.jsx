@@ -17,12 +17,18 @@ const HomeList = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [bookingId, setBookingId] = useState(null);
-  const [favouriteId, setFavouriteId] = useState(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [selectedHome, setSelectedHome] = useState(null);
 
-  const { refreshBookings, refreshFavourites } = useContext(AppContext);
+  const {
+    refreshBookings,
+    refreshFavourites,
+    bookingLoadingIds,
+    favouriteLoadingIds,
+    addFavourite,
+    addBooking,
+  } = useContext(AppContext);
   const {
     user,
     userBookings = [],
@@ -78,11 +84,9 @@ const HomeList = () => {
   const handleBookingSubmit = async (bookingData) => {
     setBookingId(bookingData.homeId);
     try {
-      await storeAPI.addToBooking(bookingData.homeId);
+      await addBooking(bookingData.homeId, setUserBookings);
       toast.success("Booked successfully!");
-      setUserBookings((prev) => [...prev, bookingData.homeId]);
       refreshBookings?.();
-      fetchHomes(1); // refresh
     } catch {
       alert("Failed to book home.");
     } finally {
@@ -95,17 +99,12 @@ const HomeList = () => {
       setShowLoginPopup(true);
       return;
     }
-    setFavouriteId(homeId);
     try {
-      await storeAPI.addToFavourite(homeId);
+      await addFavourite(homeId, setUserFavourites);
       toast.success("Added to favourites!");
-      setUserFavourites((prev) => [...prev, homeId]);
       refreshFavourites?.();
-      fetchHomes(1);
     } catch {
       alert("Failed to add to favourites.");
-    } finally {
-      setFavouriteId(null);
     }
   };
 
@@ -191,10 +190,12 @@ const HomeList = () => {
                     <button
                       onClick={() => handleBookNow(home)}
                       disabled={
+                        bookingLoadingIds.includes(home._id) ||
                         bookingId === home._id ||
                         userBookings.includes(home._id)
                       }
                       className={`flex-1 py-2 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
+                        bookingLoadingIds.includes(home._id) ||
                         bookingId === home._id
                           ? "bg-green-300"
                           : userBookings.includes(home._id)
@@ -202,7 +203,8 @@ const HomeList = () => {
                           : "bg-green-500 hover:bg-green-600 cursor-pointer"
                       }`}
                     >
-                      {bookingId === home._id
+                      {bookingLoadingIds.includes(home._id) ||
+                      bookingId === home._id
                         ? "Booking..."
                         : userBookings.includes(home._id)
                         ? "Already Booked"
@@ -212,18 +214,18 @@ const HomeList = () => {
                     <button
                       onClick={() => handleFavourite(home._id)}
                       disabled={
-                        favouriteId === home._id ||
+                        favouriteLoadingIds.includes(home._id) ||
                         userFavourites.includes(home._id)
                       }
                       className={`flex-1 py-2 text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
-                        favouriteId === home._id
+                        favouriteLoadingIds.includes(home._id)
                           ? "bg-pink-300"
                           : userFavourites.includes(home._id)
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-red-500 hover:bg-red-600 cursor-pointer"
                       }`}
                     >
-                      {favouriteId === home._id
+                      {favouriteLoadingIds.includes(home._id)
                         ? "Adding..."
                         : userFavourites.includes(home._id)
                         ? "Already Favourite"
@@ -235,7 +237,6 @@ const HomeList = () => {
             ))}
           </div>
         )}
-
         {/* Load More */}
         {currentPage < totalPages && (
           <div className="flex justify-center mt-8">

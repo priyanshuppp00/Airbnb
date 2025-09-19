@@ -9,9 +9,12 @@ const HostHomes = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
+  const [isFailed, setIsFailed] = useState(false);
+  const [progress, setProgress] = useState(0);
   const fetchHomes = () => {
     setLoading(true);
+    setIsFailed(false);
+    setProgress(0);
     storeAPI
       .getHomes()
       .then((res) => {
@@ -45,7 +48,7 @@ const HostHomes = () => {
         .deleteHome(homeId)
         .then(() => {
           toast.success("Home deleted successfully!");
-          fetchHomes(); // refresh homes
+          setHomes((prev) => prev.filter((h) => h._id !== homeId));
         })
         .catch((error) => {
           console.error("Delete failed:", error);
@@ -59,6 +62,9 @@ const HostHomes = () => {
       <Spinner
         message="Loading your homes..."
         timeoutMessage="Loading your homes is taking longer than usual. Please wait."
+        progress={progress}
+        isFailed={isFailed}
+        onRetry={() => fetchHomes(1)}
       />
     );
 

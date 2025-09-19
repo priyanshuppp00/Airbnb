@@ -96,6 +96,11 @@ const AddHome = () => {
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (rulesInputRef.current) rulesInputRef.current.value = "";
 
+      // Trigger global refresh of homes after adding
+      if (typeof window !== "undefined" && window.dispatchEvent) {
+        window.dispatchEvent(new Event("homesUpdated"));
+      }
+
       navigate("/");
     } catch (error) {
       if (error.response?.data?.error) {

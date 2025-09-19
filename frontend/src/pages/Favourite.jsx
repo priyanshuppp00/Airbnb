@@ -1,15 +1,20 @@
 import React, { useEffect, useState, useContext } from "react";
 import { UserContext } from "../context/UserContext";
+import { AppContext } from "../context/AppContext";
 import { storeAPI } from "../service/api";
 import toast, { Toaster } from "react-hot-toast";
 import Spinner from "../Components/Spinner";
 
 const Favourite = () => {
-  const { user, loading: userLoading } = useContext(UserContext);
+  const {
+    user,
+    loading: userLoading,
+    setUserFavourites,
+  } = useContext(UserContext);
   const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [removingId, setRemovingId] = useState(null);
+  const { favouriteLoadingIds, removeFavourite } = useContext(AppContext);
 
   // Fetch favourites whenever the user changes
   useEffect(() => {
@@ -52,15 +57,11 @@ const Favourite = () => {
     }
 
     try {
-      setRemovingId(homeId);
-      await storeAPI.removeFromFavourite(homeId);
+      await removeFavourite(homeId, setUserFavourites);
       toast.success("Favourite removed!");
-      // Update local state instead of refetching
       setFavourites((prev) => prev.filter((home) => home._id !== homeId));
     } catch {
       toast.error("Failed to remove favourite.");
-    } finally {
-      setRemovingId(null);
     }
   };
 
@@ -144,14 +145,16 @@ const Favourite = () => {
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={() => handleRemoveFavourite(home._id)}
-                    disabled={removingId === home._id}
+                    disabled={favouriteLoadingIds.includes(home._id)}
                     className={`flex-1 py-2   text-white font-semibold rounded-lg shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
-                      removingId === home._id
+                      favouriteLoadingIds.includes(home._id)
                         ? "bg-red-300 cursor-not-allowed"
                         : "bg-red-500 hover:bg-red-600 cursor-pointer"
                     }`}
                   >
-                    {removingId === home._id ? "Removing..." : "Remove"}
+                    {favouriteLoadingIds.includes(home._id)
+                      ? "Removing..."
+                      : "Remove"}
                   </button>
 
                   <button

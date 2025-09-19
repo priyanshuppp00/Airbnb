@@ -101,6 +101,10 @@ const SignupPage = () => {
       const res = await authAPI.signup(formData);
       login(res.data.user);
       toast.success("Signup successful! redirecting for login...");
+      // Trigger global refresh of user data after signup
+      if (typeof window !== "undefined" && window.dispatchEvent) {
+        window.dispatchEvent(new Event("userLoggedIn"));
+      }
       navigate("/"); // Redirect to home/dashboard after signup
     } catch (err) {
       const apiError =
