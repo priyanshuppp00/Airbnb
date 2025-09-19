@@ -16,10 +16,11 @@ The frontend API baseURL in production was falling back to `window.location.orig
 - Frontend uses axios with withCredentials=true.
 - MONGO_URI is the same for connectDB and MongoStore.
 
-## Fix Applied
+## Fixes Applied
 
 - Modified frontend/src/service/api.js to require VITE_API_BASE_URL in production, throwing an error if not set.
-- User must set VITE_API_BASE_URL=https://your-backend.onrender.com in Vercel environment variables.
+- Changed session cookie sameSite to "lax" to ensure cookies are sent on cross-site GET requests.
+- User must set VITE_API_BASE_URL=https://airbnb-backend-9kz8.onrender.com in Vercel environment variables.
 
 ## Plan
 
