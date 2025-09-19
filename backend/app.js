@@ -26,7 +26,11 @@ const cors = require("cors");
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // Allow cross-origin resource sharing for images
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -50,10 +54,15 @@ app.use(express.static(path.join(rootDir, "public")));
 app.use(
   "/uploads",
   cors({
-    origin: "*",
+    origin: process.env.FRONTEND_URL || "*",
     credentials: true,
   }),
-  express.static(path.join(__dirname, "uploads"))
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res, path) => {
+      res.set("Cross-Origin-Resource-Policy", "cross-origin");
+      res.set("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
+    },
+  })
 );
 
 // Session middleware
