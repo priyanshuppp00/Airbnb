@@ -50,7 +50,7 @@ app.use(express.static(path.join(rootDir, "public")));
 app.use(
   "/uploads",
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: "*",
     credentials: true,
   }),
   express.static(path.join(__dirname, "uploads"))

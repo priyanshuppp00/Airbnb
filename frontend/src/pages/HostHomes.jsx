@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Spinner from "../Components/Spinner";
 import { storeAPI, hostAPI } from "../service/api";
@@ -11,7 +11,8 @@ const HostHomes = () => {
   const navigate = useNavigate();
   const [isFailed, setIsFailed] = useState(false);
   const [progress, setProgress] = useState(0);
-  const fetchHomes = () => {
+
+  const fetchHomes = useCallback(() => {
     setLoading(true);
     setIsFailed(false);
     setProgress(0);
@@ -32,17 +33,20 @@ const HostHomes = () => {
         setError("Failed to fetch homes.");
       })
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     fetchHomes();
-  }, []);
+  }, [fetchHomes]);
 
-  const handleEdit = (homeId) => {
-    navigate(`/host/edit-home/${homeId}?editing=true`);
-  };
+  const handleEdit = useCallback(
+    (homeId) => {
+      navigate(`/host/edit-home/${homeId}?editing=true`);
+    },
+    [navigate]
+  );
 
-  const handleDelete = (homeId) => {
+  const handleDelete = useCallback((homeId) => {
     if (window.confirm("Are you sure you want to delete this home?")) {
       hostAPI
         .deleteHome(homeId)
@@ -55,7 +59,7 @@ const HostHomes = () => {
           alert("Failed to delete home.");
         });
     }
-  };
+  }, []);
 
   if (loading)
     return (
@@ -169,4 +173,4 @@ const HostHomes = () => {
   );
 };
 
-export default HostHomes;
+export default memo(HostHomes);

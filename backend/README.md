@@ -47,3 +47,14 @@ This is the backend server for the Airbnb clone project.
 
 - Static files are served from `/public` and `/uploads`.
 - Session cookies are configured for 1 day expiration.
+
+## Image Hosting Recommendation
+
+For production deployments, consider switching from local file uploads to a cloud storage service like Cloudinary or AWS S3 for better scalability and reliability. This avoids issues with file serving after deployment and provides faster image loading.
+
+To implement Cloudinary:
+
+1. Install `cloudinary` package.
+2. Configure Cloudinary in `multerConfig.js` instead of disk storage.
+3. Update `safeHome.js` to use Cloudinary URLs.
+4. Set `CLOUDINARY_URL` in environment variables.

@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, {
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+  memo,
+} from "react";
 import { Link } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import Spinner from "../Components/Spinner";
@@ -37,7 +43,7 @@ const HomeList = () => {
     setUserFavourites,
   } = useContext(UserContext);
 
-  const fetchHomes = (page = 1) => {
+  const fetchHomes = useCallback((page = 1) => {
     if (page === 1) setLoading(true);
     else setLoadingMore(true);
 
@@ -68,45 +74,54 @@ const HomeList = () => {
         setLoading(false);
         setLoadingMore(false);
       });
-  };
+  }, []);
 
-  useEffect(() => fetchHomes(), []);
+  useEffect(() => fetchHomes(), [fetchHomes]);
 
-  const handleBookNow = (home) => {
-    if (!user) {
-      setShowLoginPopup(true);
-      return;
-    }
-    setSelectedHome(home);
-    setShowBookingForm(true);
-  };
+  const handleBookNow = useCallback(
+    (home) => {
+      if (!user) {
+        setShowLoginPopup(true);
+        return;
+      }
+      setSelectedHome(home);
+      setShowBookingForm(true);
+    },
+    [user]
+  );
 
-  const handleBookingSubmit = async (bookingData) => {
-    setBookingId(bookingData.homeId);
-    try {
-      await addBooking(bookingData.homeId, setUserBookings);
-      toast.success("Booked successfully!");
-      refreshBookings?.();
-    } catch {
-      alert("Failed to book home.");
-    } finally {
-      setBookingId(null);
-    }
-  };
+  const handleBookingSubmit = useCallback(
+    async (bookingData) => {
+      setBookingId(bookingData.homeId);
+      try {
+        await addBooking(bookingData.homeId, setUserBookings);
+        toast.success("Booked successfully!");
+        refreshBookings?.();
+      } catch {
+        alert("Failed to book home.");
+      } finally {
+        setBookingId(null);
+      }
+    },
+    [addBooking, refreshBookings, setUserBookings]
+  );
 
-  const handleFavourite = async (homeId) => {
-    if (!user) {
-      setShowLoginPopup(true);
-      return;
-    }
-    try {
-      await addFavourite(homeId, setUserFavourites);
-      toast.success("Added to favourites!");
-      refreshFavourites?.();
-    } catch {
-      alert("Failed to add to favourites.");
-    }
-  };
+  const handleFavourite = useCallback(
+    async (homeId) => {
+      if (!user) {
+        setShowLoginPopup(true);
+        return;
+      }
+      try {
+        await addFavourite(homeId, setUserFavourites);
+        toast.success("Added to favourites!");
+        refreshFavourites?.();
+      } catch {
+        alert("Failed to add to favourites.");
+      }
+    },
+    [addFavourite, refreshFavourites, setUserFavourites, user]
+  );
 
   if (loading || isFailed)
     return (
@@ -269,4 +284,4 @@ const HomeList = () => {
   );
 };
 
-export default HomeList;
+export default memo(HomeList);
