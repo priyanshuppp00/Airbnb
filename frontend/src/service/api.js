@@ -11,6 +11,8 @@ const baseURL =
     ? "http://localhost:3000"
     : window.location.origin);
 
+axios.defaults.withCredentials = true; // Ensure credentials for all requests
+
 const apiClient = axios.create({
   baseURL,
   withCredentials: true, // allow cookies/sessions
