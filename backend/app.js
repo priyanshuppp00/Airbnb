@@ -105,6 +105,10 @@ app.use(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // true on HTTPS
       sameSite: "lax",
+      domain:
+        process.env.NODE_ENV === "production"
+          ? ".airbnb-henna-eight.vercel.app"
+          : undefined, // Use custom domain if set
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   })
